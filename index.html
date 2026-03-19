@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Trust Score — Smash Balloon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=General+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+/* ─── Reset & Tokens ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #00206f;
+  --blue: #0d3189;
+  --red: #fe544f;
+  --gold: #fcb900;
+  --orange: #f5a623;
+  --green: #34c759;
+  --dark: #1a1a1a;
+  --gray-100: #f7f8fa;
+  --gray-200: #ebedf2;
+  --gray-400: #9ca3af;
+  --gray-600: #6b7280;
+  --card-shadow: rgba(0,0,0,0.06) 0px 1px 3px;
+  --card-radius: 0.75rem;
+  --btn-radius: 0.5rem;
+  --font: 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --max-w: 720px;
+  --transition: 250ms ease;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  color: var(--dark);
+  background: var(--gray-100);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ─── Progress Bar ─── */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--red) 0%, var(--gold) 100%);
+  width: 0%;
+  transition: width 0.4s ease;
+  z-index: 1000;
+  display: none;
+  box-shadow: 0 1px 6px rgba(254, 84, 79, 0.35);
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 80px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  animation: progressShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* ─── Screen System ─── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  animation: fadeSlideIn 0.35s ease both;
+}
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Welcome Screen ─── */
+.welcome {
+  justify-content: center;
+  text-align: center;
+  padding-top: 3rem;
+}
+
+.logo {
+  width: 260px;
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+.welcome h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.welcome .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: var(--gray-600);
+  max-width: 520px;
+  margin: 0 auto 2.5rem;
+}
+
+/* Trust Meter Gauge */
+.gauge-wrap {
+  width: 220px;
+  height: 120px;
+  margin: 0 auto 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.gauge-bg {
+  width: 220px;
+  height: 110px;
+  border-radius: 110px 110px 0 0;
+  background: conic-gradient(from 0.75turn at 50% 100%, var(--red) 0deg, var(--gold) 90deg, var(--green) 180deg);
+  position: relative;
+}
+
+.gauge-bg::after {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 75px;
+  background: var(--gray-100);
+  border-radius: 75px 75px 0 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gauge-needle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  height: 85px;
+  background: var(--dark);
+  border-radius: 2px;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(-90deg);
+  animation: needleSweep 2s ease-out 0.5s forwards;
+  z-index: 2;
+}
+
+.gauge-needle::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: var(--dark);
+  border-radius: 50%;
+}
+
+@keyframes needleSweep {
+  0% { transform: translateX(-50%) rotate(-90deg); }
+  40% { transform: translateX(-50%) rotate(50deg); }
+  60% { transform: translateX(-50%) rotate(10deg); }
+  80% { transform: translateX(-50%) rotate(40deg); }
+  100% { transform: translateX(-50%) rotate(20deg); }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 56px;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(254,84,79,0.3);
+  }
+}
+
+.trust-line {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+}
+
+/* ─── Quiz Screen ─── */
+.quiz { padding-top: 2rem; }
+
+.quiz-header {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-bottom: 1.5rem;
+}
+
+.pillar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.35rem 0.85rem;
+  border-radius: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.pillar-badge .pillar-icon { font-size: 0.9rem; }
+
+.question-counter {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin-bottom: 0.5rem;
+}
+
+.question-text {
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  font-weight: 500;
+  color: var(--gray-600);
+  line-height: 1.4;
+  max-width: var(--max-w);
+  width: 100%;
+  font-style: italic;
+}
+
+/* Statement Card */
+.statement-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: var(--max-w);
+  margin-top: 1.5rem;
+}
+
+.statement-text {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--dark);
+  margin-bottom: 1.25rem;
+  font-weight: 500;
+}
+
+/* Rating Scale */
+.rating-scale {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.rating-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0.5rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--card-radius);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), transform 0.15s;
+  user-select: none;
+  text-align: center;
+  min-height: 56px;
+}
+
+.rating-label {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .rating-option:hover {
+    border-color: var(--blue);
+    transform: scale(1.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .rating-option:hover .rating-label {
+    color: var(--navy);
+  }
+}
+
+.rating-option.selected {
+  border-color: var(--navy);
+  background: rgba(0,32,111,0.04);
+}
+.rating-option.selected .rating-label {
+  color: var(--navy);
+}
+
+.rating-option.locked { pointer-events: none; }
+
+.back-link {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--dark); }
+
+/* ─── Pillar Interstitial ─── */
+.interstitial {
+  justify-content: center;
+  text-align: center;
+}
+
+.interstitial-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+}
+
+.check-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.check-circle svg {
+  width: 40px;
+  height: 40px;
+  stroke: #fff;
+  stroke-width: 3;
+  fill: none;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: drawCheck 0.4s ease 0.3s forwards;
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+.interstitial h2 {
+  font-size: 1.5rem;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+
+.interstitial .pillar-score {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 0.25rem;
+}
+
+.interstitial .pillar-score-label {
+  font-size: 0.9rem;
+  color: var(--gray-400);
+  margin-bottom: 2rem;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 56px;
+}
+
+@media (hover: hover) {
+  .btn-secondary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0,32,111,0.25);
+  }
+}
+
+/* ─── Lead Capture Screen ─── */
+.lead-capture {
+  justify-content: center;
+  text-align: center;
+}
+
+.blurred-score {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.blurred-score .score-preview {
+  font-size: 5rem;
+  font-weight: 700;
+  filter: blur(6px);
+  user-select: none;
+  line-height: 1;
+}
+
+.blurred-score .tier-preview {
+  font-size: 1.1rem;
+  font-weight: 600;
+  filter: blur(4px);
+  user-select: none;
+  margin-top: 0.25rem;
+}
+
+.lead-capture h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+
+.lead-capture .lead-subtitle {
+  color: var(--gray-600);
+  margin-bottom: 2rem;
+  max-width: 420px;
+}
+
+.lead-form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lead-form input {
+  font-family: var(--font);
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--btn-radius);
+  transition: border-color 0.15s;
+  outline: none;
+  width: 100%;
+}
+
+.lead-form input:focus { border-color: var(--navy); }
+
+.lead-form input.error { border-color: var(--red); }
+
+.form-error {
+  font-size: 0.8rem;
+  color: var(--red);
+  text-align: left;
+  display: none;
+}
+
+.form-error.visible { display: block; }
+
+.skip-link {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+.skip-link:hover { color: var(--gray-600); }
+
+.privacy-note {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+/* ─── Results Screen ─── */
+.results {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.results-inner {
+  width: 100%;
+  max-width: var(--max-w);
+}
+
+/* Score Hero */
+.score-hero {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 2rem;
+}
+
+.score-number {
+  font-size: clamp(4rem, 12vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.score-total {
+  font-size: 1.2rem;
+  color: var(--gray-400);
+  font-weight: 500;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border-radius: 2rem;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 1rem;
+  color: #fff;
+}
+
+.tier-message {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: var(--gray-600);
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Radar Chart */
+.radar-wrap {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.radar-wrap h3 {
+  font-size: 1.1rem;
+  color: var(--navy);
+  margin-bottom: 1rem;
+}
+
+.radar-container {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.radar-container canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Bar Chart Fallback (small screens) */
+.bar-chart-fallback {
+  display: none;
+  padding: 0 0.5rem;
+}
+
+.bar-item {
+  margin-bottom: 1rem;
+}
+
+.bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.bar-track {
+  height: 12px;
+  background: var(--gray-200);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease;
+  width: 0%;
+}
+
+/* Pillar Breakdown Cards */
+.pillar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pillar-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.pillar-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pillar-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.pillar-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pillar-card-score {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.pillar-progress {
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.pillar-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.pillar-feedback { margin-bottom: 0.75rem; }
+
+.pillar-feedback strong {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.pillar-feedback p {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.product-rec {
+  background: rgba(0,32,111,0.04);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.product-rec-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--navy);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.product-rec p {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+}
+
+.product-rec a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.product-rec a:hover { text-decoration: underline; }
+
+/* Action Plan */
+.action-plan {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.action-plan h3 {
+  font-size: 1.2rem;
+  color: var(--navy);
+  margin-bottom: 1rem;
+}
+
+.action-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.action-step:last-child { border-bottom: none; }
+
+.action-number {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.action-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.action-content p {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+}
+
+/* CTA Block */
+.cta-block {
+  background: var(--navy);
+  border-radius: var(--card-radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.cta-block h3 {
+  color: #fff;
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.cta-block p {
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 1.5rem;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-block .btn-primary {
+  font-size: 1rem;
+  padding: 0.85rem 2rem;
+}
+
+/* Share & Print */
+.share-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--btn-radius);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px solid var(--gray-200);
+  background: #fff;
+  color: var(--dark);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+@media (hover: hover) {
+  .share-btn:hover {
+    border-color: var(--navy);
+    transform: scale(1.02);
+  }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .screen { padding: 1.5rem 1rem; }
+  .score-hero { padding: 2rem 1rem; }
+  .cta-block { padding: 2rem 1rem; }
+}
+
+@media (max-width: 360px) {
+  .radar-wrap .radar-container { display: none; }
+  .bar-chart-fallback { display: block; }
+}
+
+@media (min-width: 840px) {
+  .pillar-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ─── Print ─── */
+@media print {
+  body { background: #fff; }
+  .progress-bar, .share-row, .cta-block, .back-link, .skip-link, .btn-primary, .btn-secondary { display: none !important; }
+  .screen { display: none !important; min-height: 0; padding: 0; animation: none; }
+  .screen.results { display: flex !important; padding: 1rem; }
+  .results-inner { max-width: 100%; }
+  .score-hero, .radar-wrap, .pillar-card, .action-plan { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .pillar-card { opacity: 1 !important; transform: none !important; }
+  .print-header { display: block !important; text-align: center; margin-bottom: 1.5rem; }
+  .print-header img { width: 150px; }
+  .print-header p { font-size: 0.8rem; color: var(--gray-400); }
+}
+
+.print-header { display: none; }
+
+/* ─── Utility ─── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- SCREEN 1: Welcome -->
+<section class="screen welcome active" id="screenWelcome">
+  <img class="logo" src="logo.png" alt="Smash Balloon">
+
+  <h1>The Website Trust Score</h1>
+  <p class="subtitle">Discover how much trust your website actually builds — and the specific gaps costing you conversions. Score yourself across 6 critical trust pillars in under 2 minutes.</p>
+
+  <div class="gauge-wrap">
+    <div class="gauge-bg"></div>
+    <div class="gauge-needle"></div>
+  </div>
+
+  <button class="btn-primary" onclick="startQuiz()">
+    Start My Assessment
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <p class="trust-line">Takes ~2 min &middot; No signup required to start &middot; Free</p>
+</section>
+
+<!-- SCREEN 2: Quiz Questions -->
+<section class="screen quiz" id="screenQuiz">
+  <div class="quiz-header">
+    <div class="pillar-badge">
+      <span class="pillar-icon" id="pillarIcon"></span>
+      <span id="pillarName"></span>
+    </div>
+    <p class="question-counter" id="questionCounter"></p>
+    <p class="question-text" id="questionText"></p>
+  </div>
+  <div id="answersContainer"></div>
+  <button class="back-link" id="backBtn" onclick="goBack()">&larr; Previous question</button>
+</section>
+
+<!-- SCREEN 2b: Pillar Interstitial -->
+<section class="screen interstitial" id="screenInterstitial">
+  <div class="check-circle" id="checkCircle">
+    <svg viewBox="0 0 40 40"><polyline points="10,22 18,30 30,12"/></svg>
+  </div>
+  <h2 id="interstitialPillar"></h2>
+  <div class="pillar-score" id="interstitialScore"></div>
+  <p class="pillar-score-label">out of 12</p>
+  <button class="btn-secondary" id="interstitialNext">Continue</button>
+</section>
+
+<!-- SCREEN 3: Lead Capture -->
+<section class="screen lead-capture" id="screenLead">
+  <h2>Your Trust Score is Ready</h2>
+  <p class="lead-subtitle">Enter your details to unlock your personalized trust report with actionable recommendations.</p>
+
+  <div class="blurred-score">
+    <div class="score-preview" id="blurredScore"></div>
+    <div class="tier-preview" id="blurredTier"></div>
+  </div>
+
+  <form class="lead-form" id="leadForm" onsubmit="return submitLead(event)">
+    <input type="text" name="firstName" placeholder="First name" required id="leadName" autocomplete="given-name">
+    <p class="form-error" id="nameError">Please enter your name</p>
+    <input type="email" name="email" placeholder="Email address" required id="leadEmail" autocomplete="email">
+    <p class="form-error" id="emailError">Please enter a valid email</p>
+    <input type="url" name="website" placeholder="Website URL (optional)" id="leadWebsite" autocomplete="url">
+    <button type="submit" class="btn-primary" style="width:100%">Reveal My Trust Score</button>
+  </form>
+  <button class="skip-link" onclick="showResults(true)">Skip for now</button>
+  <p class="privacy-note">We respect your privacy. Unsubscribe anytime.</p>
+</section>
+
+<!-- SCREEN 4: Results -->
+<section class="screen results" id="screenResults">
+  <div class="results-inner">
+    <div class="print-header">
+      <img src="logo.png" alt="Smash Balloon" style="width:180px">
+      <p>Website Trust Score Report</p>
+    </div>
+
+    <!-- Score Hero -->
+    <div class="score-hero">
+      <div class="score-number" id="scoreNumber">0</div>
+      <div class="score-total">out of 72</div>
+      <div class="tier-badge" id="tierBadge"></div>
+      <p class="tier-message" id="tierMessage"></p>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="radar-wrap">
+      <h3>Your Trust Profile</h3>
+      <div class="radar-container">
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="bar-chart-fallback" id="barChartFallback"></div>
+    </div>
+
+    <!-- Pillar Breakdown -->
+    <div class="pillar-cards" id="pillarCards"></div>
+
+    <!-- Action Plan -->
+    <div class="action-plan" id="actionPlan">
+      <h3>Your Priority Action Plan</h3>
+    </div>
+
+    <!-- CTA Block -->
+    <div class="cta-block">
+      <h3>Fix Your Weakest Trust Pillar Today</h3>
+      <p>Smash Balloon helps 1.75 million+ websites automatically display social proof, fresh content, and engaging visuals.</p>
+      <a href="https://smashballoon.com/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results" target="_blank" class="btn-primary">Explore Smash Balloon</a>
+    </div>
+
+    <!-- Share -->
+    <div class="share-row">
+      <button class="share-btn" onclick="shareTwitter()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Share on X
+      </button>
+      <button class="share-btn" onclick="shareLinkedIn()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Share on LinkedIn
+      </button>
+      <button class="share-btn" onclick="window.print()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print Report
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ═══════════════════════════════════════════
+   QUIZ DATA — 24 Questions, 6 Pillars
+   ═══════════════════════════════════════════ */
+
+const PILLARS = [
+  { name: 'Social Proof', icon: '\u2B50', key: 'socialProof', subtitle: 'Do visitors see evidence that real people trust you?' },
+  { name: 'Content Freshness', icon: '\uD83D\uDD04', key: 'contentFreshness', subtitle: 'Does your website feel active, current, and alive?' },
+  { name: 'Video & Visual', icon: '\uD83C\uDFA5', key: 'videoVisual', subtitle: 'Are you using video to hold attention and build connection?' },
+  { name: 'Platform Continuity', icon: '\uD83D\uDD17', key: 'platformContinuity', subtitle: 'Does your website feel like a natural extension of your social presence?' },
+  { name: 'Clarity & Direction', icon: '\uD83C\uDFAF', key: 'clarityDirection', subtitle: 'Does your website make it obvious what to do next?' },
+  { name: 'Mobile & Speed', icon: '\u26A1', key: 'mobileSpeed', subtitle: 'Does your website perform where most of your visitors actually are?' }
+];
+
+const RATING_LABELS = [
+  'Not at all',
+  'Barely',
+  'Mostly',
+  'Nailed it'
+];
+
+const QUESTIONS = [
+  // ── Social Proof ──
+  { pillar: 0, text: 'My website shows real customer reviews from places like Google, Facebook, or Yelp.' },
+  { pillar: 0, text: 'Reviews are easy to spot on my most important pages — visitors don\'t have to go looking for them.' },
+  { pillar: 0, text: 'I show content from real customers — like tagged posts, photos, or community shoutouts.' },
+  { pillar: 0, text: 'Visitors can see signs of real engagement (likes, comments, follower counts) somewhere on my site.' },
+
+  // ── Content Freshness ──
+  { pillar: 1, text: 'My website reflects what I\'ve been posting on social media recently.' },
+  { pillar: 1, text: 'A visitor can tell that my business has been active lately.' },
+  { pillar: 1, text: 'I don\'t have to manually update my website every time I want it to feel current.' },
+  { pillar: 1, text: 'My latest videos, posts, or content are easy to find on my site.' },
+
+  // ── Video & Visual ──
+  { pillar: 2, text: 'My website features video content on important pages.' },
+  { pillar: 2, text: 'Visitors can watch my latest videos without leaving my site.' },
+  { pillar: 2, text: 'I use short-form video (Reels, Shorts, TikToks) to engage visitors on my site.' },
+  { pillar: 2, text: 'Video content on my site updates automatically when I post something new.' },
+
+  // ── Platform Continuity ──
+  { pillar: 3, text: 'My website looks and feels like it belongs to the same brand as my social media.' },
+  { pillar: 3, text: 'When someone clicks through from a social post, they find relevant content right away.' },
+  { pillar: 3, text: 'The tone and energy of my website matches how I come across on social.' },
+  { pillar: 3, text: 'My social content is actually visible on my website — not just linked from the footer.' },
+
+  // ── Clarity & Direction ──
+  { pillar: 4, text: 'My homepage makes it clear what I do and who I help within a few seconds.' },
+  { pillar: 4, text: 'Each important page has one main thing I want visitors to do next.' },
+  { pillar: 4, text: 'Someone coming from social media can easily figure out how to take the next step.' },
+  { pillar: 4, text: 'My offer, pricing, or next step is easy to find without digging around.' },
+
+  // ── Mobile & Speed ──
+  { pillar: 5, text: 'My website loads fast on mobile — no long waits.' },
+  { pillar: 5, text: 'Social feeds, videos, and reviews all look good on every screen size.' },
+  { pillar: 5, text: 'The mobile version of my site feels intentional, not like a squished desktop page.' },
+  { pillar: 5, text: 'Embedded content (feeds, videos, widgets) doesn\'t slow my site down.' }
+];
+
+const TIERS = [
+  { max: 20, name: 'The Ghost Site', color: '#fe544f', message: 'Your website isn\'t showing people why they should trust you yet. Visitors land, don\'t see any proof that others trust you, and leave. The good news? Small changes here make a big difference fast.' },
+  { max: 40, name: 'The Leaky Funnel', color: '#fcb900', message: 'You\'re getting attention — but losing people before they take action. The foundation is there. You just need to close the gaps that are quietly sending visitors away.' },
+  { max: 55, name: 'The Promising Foundation', color: '#f5a623', message: 'Your site has good bones but it\'s missing a few key trust signals. You\'re closer than you think — a few focused improvements could make a real difference.' },
+  { max: 72, name: 'The Trust Machine', color: '#34c759', message: 'Your website does the heavy lifting for you. It feels alive, trustworthy, and connected to your brand. Keep doing what you\'re doing and fine-tune as you grow.' }
+];
+
+const PRODUCT_RECS = [
+  {
+    product: 'Reviews Feed Pro',
+    hook: 'Show your Google, Yelp, and Facebook reviews right on your site — they update automatically.',
+    url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You know reviews matter — that\'s already half the battle.',
+    quickWin: 'Put your best reviews from Google, Yelp, or Facebook on your most-visited pages. Let them update on their own.'
+  },
+  {
+    product: 'Facebook Feed Pro + Twitter Feed',
+    hook: 'Your site stays fresh automatically every time you post on social.',
+    url: 'https://smashballoon.com/social-wall/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You\'re already creating content — it just isn\'t showing up on your site yet.',
+    quickWin: 'Add your Facebook or Twitter feed to your homepage so it updates itself whenever you post.'
+  },
+  {
+    product: 'YouTube Feed Pro + Instagram Feed Pro',
+    hook: 'Put your videos and visual content right on your site so visitors don\'t have to leave.',
+    url: 'https://smashballoon.com/youtube-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You\'re already making video and visual content — great start.',
+    quickWin: 'Embed your YouTube or Instagram feed on your main pages so visitors see real content instead of stock photos.'
+  },
+  {
+    product: 'Social Wall (All Access Bundle)',
+    hook: 'Pull all your social platforms into one feed on your site — everything in one place.',
+    url: 'https://smashballoon.com/social-wall/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You\'re active on multiple social platforms — that\'s a huge advantage.',
+    quickWin: 'Set up a Social Wall that pulls all your platforms into one feed. Visitors see your full presence without having to leave your site.'
+  },
+  {
+    product: 'Reviews Feed Pro + Instagram Feed Pro',
+    hook: 'Show reviews and real customer content near the top of your pages so visitors see proof right away.',
+    url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You\'ve got a clear message — it just needs some proof behind it.',
+    quickWin: 'Add a review section and Instagram feed near the top of your pages. Let real customers do the talking for you.'
+  },
+  {
+    product: 'All Smash Balloon Feeds',
+    hook: 'All Smash Balloon feeds are built to load fast and look great on every device.',
+    url: 'https://smashballoon.com/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
+    whatsWorking: 'You care about mobile — that puts you ahead of most sites already.',
+    quickWin: 'Check if anything embedded on your site is slowing it down. Smash Balloon feeds are designed to load fast and look right on every screen size.'
+  }
+];
+
+/* ═══════════════════════════════════════════
+   QUIZ STATE
+   ═══════════════════════════════════════════ */
+let currentQuestion = 0;
+let answers = new Array(24).fill(null);
+let pillarScores = new Array(6).fill(0);
+let startTime = null;
+let skippedLead = false;
+
+/* ═══════════════════════════════════════════
+   SCREEN TRANSITIONS
+   ═══════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  target.classList.remove('active');
+  // Force reflow for animation restart
+  void target.offsetWidth;
+  target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/* ═══════════════════════════════════════════
+   WELCOME → QUIZ
+   ═══════════════════════════════════════════ */
+function startQuiz() {
+  startTime = Date.now();
+  document.getElementById('progressBar').style.display = 'block';
+  showScreen('screenQuiz');
+  renderQuestion();
+}
+
+/* ═══════════════════════════════════════════
+   RENDER QUESTION
+   ═══════════════════════════════════════════ */
+function renderQuestion() {
+  const q = QUESTIONS[currentQuestion];
+  const pillar = PILLARS[q.pillar];
+
+  document.getElementById('pillarIcon').textContent = pillar.icon;
+  document.getElementById('pillarName').textContent = pillar.name;
+  document.getElementById('questionCounter').textContent = `Question ${currentQuestion + 1} of 24`;
+  document.getElementById('questionText').textContent = pillar.subtitle;
+
+  // Progress bar
+  document.getElementById('progressBar').style.width = ((currentQuestion / 24) * 100) + '%';
+
+  // Back button visibility
+  document.getElementById('backBtn').style.visibility = currentQuestion > 0 ? 'visible' : 'hidden';
+
+  // Statement card with rating scale
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = `
+    <div class="statement-card">
+      <div class="statement-text">${q.text}</div>
+      <div class="rating-scale">
+        ${RATING_LABELS.map((label, i) => `
+          <div class="rating-option${answers[currentQuestion] === i ? ' selected' : ''}" onclick="selectAnswer(${i})" role="button" tabindex="0" aria-label="${label}">
+            <span class="rating-label">${label}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Keyboard support
+  container.querySelectorAll('.rating-option').forEach((opt, i) => {
+    opt.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectAnswer(i); }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SELECT ANSWER
+   ═══════════════════════════════════════════ */
+function selectAnswer(index) {
+  answers[currentQuestion] = index;
+
+  // Visual feedback
+  const options = document.querySelectorAll('.rating-option');
+  options.forEach((c, i) => {
+    c.classList.toggle('selected', i === index);
+    c.classList.add('locked');
+  });
+
+  // Auto-advance after 400ms
+  setTimeout(() => {
+    const q = QUESTIONS[currentQuestion];
+    const currentPillar = q.pillar;
+    currentQuestion++;
+
+    if (currentQuestion >= QUESTIONS.length) {
+      // Quiz complete
+      calculateScores();
+      showLeadCapture();
+    } else if (QUESTIONS[currentQuestion].pillar !== currentPillar) {
+      // Pillar transition — show interstitial
+      showPillarInterstitial(currentPillar);
+    } else {
+      renderQuestion();
+    }
+  }, 400);
+}
+
+/* ═══════════════════════════════════════════
+   GO BACK
+   ═══════════════════════════════════════════ */
+function goBack() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    renderQuestion();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   PILLAR INTERSTITIAL
+   ═══════════════════════════════════════════ */
+function showPillarInterstitial(pillarIndex) {
+  const pillar = PILLARS[pillarIndex];
+  // Calculate pillar score
+  let score = 0;
+  for (let i = pillarIndex * 4; i < pillarIndex * 4 + 4; i++) {
+    if (answers[i] !== null) {
+      score += answers[i]; // score = rating index (0-3)
+    }
+  }
+  pillarScores[pillarIndex] = score;
+
+  document.getElementById('interstitialPillar').textContent = `${pillar.icon} ${pillar.name} Complete`;
+  document.getElementById('interstitialScore').textContent = score;
+
+  // Re-trigger check animation
+  const circle = document.getElementById('checkCircle');
+  circle.style.animation = 'none';
+  void circle.offsetWidth;
+  circle.style.animation = '';
+
+  const svg = circle.querySelector('svg polyline');
+  svg.style.animation = 'none';
+  void svg.offsetWidth;
+  svg.style.animation = '';
+
+  showScreen('screenInterstitial');
+
+  document.getElementById('interstitialNext').onclick = () => {
+    showScreen('screenQuiz');
+    renderQuestion();
+  };
+}
+
+/* ═══════════════════════════════════════════
+   CALCULATE SCORES
+   ═══════════════════════════════════════════ */
+function calculateScores() {
+  pillarScores = new Array(6).fill(0);
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    if (answers[i] !== null) {
+      const pillarIdx = QUESTIONS[i].pillar;
+      pillarScores[pillarIdx] += answers[i]; // score = rating index (0-3)
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   LEAD CAPTURE
+   ═══════════════════════════════════════════ */
+function showLeadCapture() {
+  const total = pillarScores.reduce((a, b) => a + b, 0);
+  const tier = TIERS.find(t => total <= t.max);
+
+  document.getElementById('blurredScore').textContent = total;
+  document.getElementById('blurredScore').style.color = tier.color;
+  document.getElementById('blurredTier').textContent = tier.name;
+  document.getElementById('blurredTier').style.color = tier.color;
+
+  document.getElementById('progressBar').style.width = '100%';
+  showScreen('screenLead');
+}
+
+function submitLead(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('leadName').value.trim();
+  const email = document.getElementById('leadEmail').value.trim();
+  const website = document.getElementById('leadWebsite').value.trim();
+
+  // Validation
+  let valid = true;
+  if (!name) {
+    document.getElementById('nameError').classList.add('visible');
+    document.getElementById('leadName').classList.add('error');
+    valid = false;
+  } else {
+    document.getElementById('nameError').classList.remove('visible');
+    document.getElementById('leadName').classList.remove('error');
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('emailError').classList.add('visible');
+    document.getElementById('leadEmail').classList.add('error');
+    valid = false;
+  } else {
+    document.getElementById('emailError').classList.remove('visible');
+    document.getElementById('leadEmail').classList.remove('error');
+  }
+
+  if (!valid) return false;
+
+  const total = pillarScores.reduce((a, b) => a + b, 0);
+  const tier = TIERS.find(t => total <= t.max);
+  const lowestPillar = PILLARS[pillarScores.indexOf(Math.min(...pillarScores))].name;
+  const completionTime = Math.round((Date.now() - startTime) / 1000);
+
+  const payload = {
+    firstName: name,
+    email: email,
+    website: website,
+    totalScore: total,
+    tier: tier.name,
+    pillarScores: Object.fromEntries(PILLARS.map((p, i) => [p.key, pillarScores[i]])),
+    lowestPillar: lowestPillar,
+    completionTimeSeconds: completionTime,
+    skipped: false,
+    timestamp: new Date().toISOString()
+  };
+
+  // Send to webhook (configure URL below)
+  sendLeadData(payload);
+  showResults(false);
+  return false;
+}
+
+function sendLeadData(payload) {
+  // ── CONFIGURE YOUR WEBHOOK URL HERE ──
+  const WEBHOOK_URL = ''; // e.g. 'https://formspree.io/f/xxxxxxxx'
+
+  if (!WEBHOOK_URL) {
+    console.log('Lead data (no webhook configured):', payload);
+    localStorage.setItem('trustScoreLead', JSON.stringify(payload));
+    return;
+  }
+
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {
+    // Fallback: save to localStorage for retry
+    localStorage.setItem('trustScoreLeadRetry', JSON.stringify(payload));
+    console.warn('Lead capture failed — saved to localStorage for retry');
+  });
+}
+
+// Retry failed lead submissions on page load
+(function retryLead() {
+  const retry = localStorage.getItem('trustScoreLeadRetry');
+  if (retry) {
+    const WEBHOOK_URL = '';
+    if (WEBHOOK_URL) {
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: retry
+      }).then(() => localStorage.removeItem('trustScoreLeadRetry'))
+        .catch(() => {});
+    }
+  }
+})();
+
+/* ═══════════════════════════════════════════
+   RESULTS
+   ═══════════════════════════════════════════ */
+function showResults(wasSkipped) {
+  skippedLead = wasSkipped;
+
+  if (wasSkipped) {
+    const total = pillarScores.reduce((a, b) => a + b, 0);
+    const tier = TIERS.find(t => total <= t.max);
+    const lowestPillar = PILLARS[pillarScores.indexOf(Math.min(...pillarScores))].name;
+    const payload = {
+      skipped: true,
+      totalScore: total,
+      tier: tier.name,
+      lowestPillar: lowestPillar,
+      timestamp: new Date().toISOString()
+    };
+    console.log('Quiz completed (skipped lead capture):', payload);
+  }
+
+  document.getElementById('progressBar').style.display = 'none';
+  showScreen('screenResults');
+  renderResults();
+}
+
+function renderResults() {
+  const total = pillarScores.reduce((a, b) => a + b, 0);
+  const tier = TIERS.find(t => total <= t.max);
+
+  // Animated score counter
+  const scoreEl = document.getElementById('scoreNumber');
+  scoreEl.style.color = tier.color;
+  animateCounter(scoreEl, 0, total, 1500);
+
+  // Tier badge
+  const badge = document.getElementById('tierBadge');
+  badge.textContent = tier.name;
+  badge.style.background = tier.color;
+
+  // Tier message
+  document.getElementById('tierMessage').textContent = tier.message;
+
+  // Radar chart
+  renderRadarChart();
+
+  // Bar chart fallback
+  renderBarChart();
+
+  // Pillar breakdown cards
+  renderPillarCards();
+
+  // Action plan
+  renderActionPlan();
+}
+
+function animateCounter(el, start, end, duration) {
+  const startTs = performance.now();
+  function step(ts) {
+    const progress = Math.min((ts - startTs) / duration, 1);
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (end - start) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderRadarChart() {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const labels = PILLARS.map(p => p.name);
+  const data = pillarScores.map(s => s);
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Your Score',
+        data: data,
+        backgroundColor: 'rgba(0, 32, 111, 0.15)',
+        borderColor: '#00206f',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#00206f',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: 1200, easing: 'easeOutQuart' },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 12,
+          ticks: {
+            stepSize: 3,
+            font: { family: "'General Sans', sans-serif", size: 11 },
+            backdropColor: 'transparent',
+            color: '#9ca3af'
+          },
+          grid: { color: 'rgba(0,0,0,0.06)' },
+          angleLines: { color: 'rgba(0,0,0,0.06)' },
+          pointLabels: {
+            font: { family: "'General Sans', sans-serif", size: 12, weight: '600' },
+            color: '#1a1a1a'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+}
+
+function renderBarChart() {
+  const container = document.getElementById('barChartFallback');
+  container.innerHTML = PILLARS.map((p, i) => {
+    const pct = (pillarScores[i] / 12) * 100;
+    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
+    return `
+      <div class="bar-item">
+        <div class="bar-label"><span>${p.icon} ${p.name}</span><span>${pillarScores[i]}/12</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  // Animate bars
+  setTimeout(() => {
+    container.querySelectorAll('.bar-fill').forEach(bar => {
+      bar.style.width = bar.style.width; // force paint
+    });
+  }, 100);
+}
+
+function renderPillarCards() {
+  const container = document.getElementById('pillarCards');
+  container.innerHTML = PILLARS.map((pillar, i) => {
+    const score = pillarScores[i];
+    const pct = (score / 12) * 100;
+    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
+    const rec = PRODUCT_RECS[i];
+    const showRec = score < 9;
+
+    return `
+      <div class="pillar-card" data-observe>
+        <div class="pillar-card-header">
+          <div class="pillar-card-title">${pillar.icon} ${pillar.name}</div>
+          <div class="pillar-card-score">${score}/12</div>
+        </div>
+        <div class="pillar-progress"><div class="pillar-progress-fill" style="background:${color};width:0%;" data-width="${pct}%"></div></div>
+        <div class="pillar-feedback">
+          <strong style="color:var(--green)">What's Working</strong>
+          <p>${rec.whatsWorking}</p>
+        </div>
+        <div class="pillar-feedback">
+          <strong style="color:var(--red)">Quick Win</strong>
+          <p>${rec.quickWin}</p>
+        </div>
+        ${showRec ? `
+        <div class="product-rec">
+          <div class="product-rec-title">Recommended Tool</div>
+          <p><a href="${rec.url}" target="_blank">${rec.product}</a> — ${rec.hook}</p>
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Staggered reveal with IntersectionObserver
+  const cards = container.querySelectorAll('[data-observe]');
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+            // Animate progress bar fill
+            const fill = entry.target.querySelector('.pillar-progress-fill');
+            if (fill) fill.style.width = fill.dataset.width;
+          }, i * 100);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    cards.forEach(c => observer.observe(c));
+  } else {
+    cards.forEach(c => {
+      c.classList.add('visible');
+      const fill = c.querySelector('.pillar-progress-fill');
+      if (fill) fill.style.width = fill.dataset.width;
+    });
+  }
+}
+
+function renderActionPlan() {
+  const container = document.getElementById('actionPlan');
+
+  // Sort pillars by score (lowest first), take top 3
+  const ranked = PILLARS.map((p, i) => ({ ...p, score: pillarScores[i], index: i }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  const stepsHTML = ranked.map((p, i) => {
+    const rec = PRODUCT_RECS[p.index];
+    return `
+      <div class="action-step">
+        <div class="action-number">${i + 1}</div>
+        <div class="action-content">
+          <h4>${p.icon} ${p.name} (${p.score}/12)</h4>
+          <p>${rec.quickWin} <a href="${rec.url}" target="_blank" style="color:var(--red);font-weight:600;text-decoration:none;">Try ${rec.product} &rarr;</a></p>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `<h3>Your Priority Action Plan</h3>${stepsHTML}`;
+}
+
+/* ═══════════════════════════════════════════
+   SHARE
+   ═══════════════════════════════════════════ */
+function shareTwitter() {
+  const total = pillarScores.reduce((a, b) => a + b, 0);
+  const tier = TIERS.find(t => total <= t.max);
+  const text = encodeURIComponent(`I just scored ${total}/72 on the Website Trust Score quiz — "${tier.name}" \uD83D\uDC40\n\nTake the free assessment and see how your website stacks up:\nhttps://smashballoon.com/trust-score/`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
+}
+
+function shareLinkedIn() {
+  const url = encodeURIComponent('https://smashballoon.com/trust-score/');
+  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=550,height=420');
+}
+
+/* ═══════════════════════════════════════════
+   KEYBOARD NAV
+   ═══════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('screenQuiz').classList.contains('active')) return;
+  const key = e.key;
+  if (key >= '0' && key <= '3') selectAnswer(parseInt(key));
+  if (key === 'Backspace' && !e.target.matches('input')) goBack();
+});
+</script>
+
+</body>
+</html>
