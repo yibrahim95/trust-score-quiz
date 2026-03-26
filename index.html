@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Website Trust Score — Smash Balloon</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <style>
@@ -1869,7 +1869,7 @@ function renderResults() {
   tierEl.style.background = tier.color;
   document.getElementById('shMessage').textContent = tier.message;
 
-  renderRadar();
+  try { renderRadar(); } catch(e) { console.warn('Radar chart error:', e); }
   renderBreakdownCards();
   renderActionPlan();
 }
