@@ -4,758 +4,983 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Website Trust Score — Smash Balloon</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=General+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <style>
-/* ─── Reset & Tokens ─── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --navy: #00206f;
-  --blue: #0d3189;
-  --red: #fe544f;
-  --gold: #fcb900;
-  --orange: #f5a623;
-  --green: #34c759;
-  --dark: #1a1a1a;
-  --gray-100: #f7f8fa;
-  --gray-200: #ebedf2;
-  --gray-400: #9ca3af;
-  --gray-600: #6b7280;
-  --card-shadow: rgba(0,0,0,0.06) 0px 1px 3px;
-  --card-radius: 0.75rem;
-  --btn-radius: 0.5rem;
-  --font: 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --max-w: 720px;
-  --transition: 250ms ease;
+/* ═══════════════════════════════════
+   FONT
+   ═══════════════════════════════════ */
+@font-face {
+  font-family: 'General Sans';
+  src: url('fonts/GeneralSans-Variable.woff2') format('woff2'),
+       url('fonts/GeneralSans-Variable.woff') format('woff');
+  font-weight: 200 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('fonts/GeneralSans-VariableItalic.woff2') format('woff2'),
+       url('fonts/GeneralSans-VariableItalic.woff') format('woff');
+  font-weight: 200 700;
+  font-display: swap;
+  font-style: italic;
 }
 
+/* ═══════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════ */
+:root {
+  --navy: #00206f;
+  --navy-dark: #001652;
+  --red: #fe544f;
+  --red-hover: #e94440;
+  --gold: #fcb900;
+  --orange: #f5a623;
+  --green: #2db87a;
+  --bg: #f7f8fa;
+  --bg-warm: #eee9e0;
+  --white: #ffffff;
+  --card: #ffffff;
+  --dark: #1a1a1a;
+  --gray-100: #f7f5f2;
+  --gray-200: #e8e4de;
+  --gray-300: #d5d0c9;
+  --gray-400: #a09890;
+  --gray-500: #807870;
+  --gray-600: #605850;
+  --font: 'General Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.06);
+  --max-w: 600px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font);
+  font-weight: 500;
   color: var(--dark);
-  background: var(--gray-100);
+  background: var(--bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* ─── Progress Bar ─── */
-.progress-bar {
+/* ═══════════════════════════════════
+   QUIZ HEADER
+   ═══════════════════════════════════ */
+.quiz-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 6px;
-  background: linear-gradient(90deg, var(--red) 0%, var(--gold) 100%);
-  width: 0%;
-  transition: width 0.4s ease;
-  z-index: 1000;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
   display: none;
-  box-shadow: 0 1px 6px rgba(254, 84, 79, 0.35);
+  flex-direction: column;
+  background: var(--white);
 }
-
-.progress-bar::after {
-  content: '';
+.quiz-header.visible { display: flex; }
+.quiz-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 68px;
+  padding: 0 16px;
+}
+.quiz-header-bar .btn-restart {
   position: absolute;
-  right: 0;
-  top: 0;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 8px 14px;
+  transition: all 0.15s;
+}
+.quiz-header-bar .btn-restart:hover {
+  background: var(--gray-200);
+  color: var(--dark);
+}
+.quiz-header-bar .btn-restart i { font-size: 14px; }
+.quiz-header-logo svg {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+.quiz-progress-track {
+  height: 3px;
+  background: var(--gray-200);
+  width: 100%;
+}
+.quiz-progress-fill {
   height: 100%;
-  width: 80px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
-  animation: progressShimmer 1.5s ease-in-out infinite;
+  background: var(--navy);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.4s var(--ease);
+  width: 0%;
 }
 
-@keyframes progressShimmer {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
-}
-
-/* ─── Screen System ─── */
+/* ═══════════════════════════════════
+   SCREEN SYSTEM
+   ═══════════════════════════════════ */
 .screen {
   display: none;
   min-height: 100vh;
-  padding: 2rem 1rem;
-  animation: fadeSlideIn 0.35s ease both;
+  padding: 2rem 1.25rem;
+  flex-direction: column;
+  align-items: center;
 }
-.screen.active { display: flex; flex-direction: column; align-items: center; }
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(12px); }
+.screen.active {
+  display: flex;
+  animation: screenIn 0.45s var(--ease) both;
+}
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Welcome Screen ─── */
+/* ═══════════════════════════════════
+   WELCOME
+   ═══════════════════════════════════ */
 .welcome {
   justify-content: center;
   text-align: center;
-  padding-top: 3rem;
+  padding-top: 4rem;
 }
 
-.logo {
-  width: 260px;
-  height: auto;
-  margin-bottom: 2rem;
+.welcome-logo {
+  margin-bottom: 3rem;
+  line-height: 1;
+}
+.welcome-logo svg {
+  height: 45px;
+  width: auto;
 }
 
 .welcome h1 {
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
   color: var(--navy);
-  margin-bottom: 0.75rem;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  max-width: 520px;
   letter-spacing: -0.02em;
+}
+.welcome h1 em {
+  font-style: italic;
+  color: var(--red);
 }
 
 .welcome .subtitle {
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-  color: var(--gray-600);
-  max-width: 520px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  max-width: 440px;
   margin: 0 auto 2.5rem;
+  line-height: 1.6;
 }
 
-/* Trust Meter Gauge */
+/* Gauge */
 .gauge-wrap {
-  width: 220px;
-  height: 120px;
+  width: 200px;
+  height: 110px;
   margin: 0 auto 2.5rem;
   position: relative;
   overflow: hidden;
 }
-
 .gauge-bg {
-  width: 220px;
-  height: 110px;
-  border-radius: 110px 110px 0 0;
+  width: 200px;
+  height: 100px;
+  border-radius: 100px 100px 0 0;
   background: conic-gradient(from 0.75turn at 50% 100%, var(--red) 0deg, var(--gold) 90deg, var(--green) 180deg);
   position: relative;
 }
-
 .gauge-bg::after {
   content: '';
   position: absolute;
-  width: 150px;
-  height: 75px;
-  background: var(--gray-100);
-  border-radius: 75px 75px 0 0;
+  width: 136px;
+  height: 68px;
+  background: var(--bg);
+  border-radius: 68px 68px 0 0;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
 }
-
 .gauge-needle {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 4px;
-  height: 85px;
+  width: 3px;
+  height: 76px;
   background: var(--dark);
   border-radius: 2px;
   transform-origin: bottom center;
   transform: translateX(-50%) rotate(-90deg);
-  animation: needleSweep 2s ease-out 0.5s forwards;
+  animation: needleSweep 2.2s var(--ease) 0.4s forwards;
   z-index: 2;
 }
-
 .gauge-needle::after {
   content: '';
   position: absolute;
   bottom: -5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   background: var(--dark);
   border-radius: 50%;
 }
-
 @keyframes needleSweep {
   0% { transform: translateX(-50%) rotate(-90deg); }
   40% { transform: translateX(-50%) rotate(50deg); }
-  60% { transform: translateX(-50%) rotate(10deg); }
-  80% { transform: translateX(-50%) rotate(40deg); }
+  65% { transform: translateX(-50%) rotate(10deg); }
+  85% { transform: translateX(-50%) rotate(35deg); }
   100% { transform: translateX(-50%) rotate(20deg); }
 }
 
-.btn-primary {
+.pillars-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 440px;
+  margin: 0 auto 2.5rem;
+}
+.pillar-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.btn-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--red);
   color: #fff;
   font-family: var(--font);
   font-weight: 600;
-  font-size: 1.1rem;
-  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+  padding: 14px 32px;
   border: none;
-  border-radius: var(--btn-radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  min-height: 56px;
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
 }
-
-@media (hover: hover) {
-  .btn-primary:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 16px rgba(254,84,79,0.3);
-  }
+.btn-start:hover {
+  background: var(--red-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(254,84,79,0.25);
 }
+.btn-start svg { transition: transform 0.15s; }
+.btn-start:hover svg { transform: translateX(2px); }
 
 .trust-line {
   margin-top: 1rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--gray-400);
 }
 
-/* ─── Quiz Screen ─── */
-.quiz { padding-top: 2rem; }
-
-.quiz-header {
-  width: 100%;
-  max-width: var(--max-w);
-  margin-bottom: 1.5rem;
+/* ═══════════════════════════════════
+   PILLAR INTRO
+   ═══════════════════════════════════ */
+.pillar-intro {
+  justify-content: center;
+  text-align: center;
 }
-
-.pillar-badge {
+.pillar-intro-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: popIn 0.5s var(--ease) both;
+  color: var(--navy);
+  line-height: 1;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.pillar-intro-counter {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+.pillar-intro h2 {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--navy);
+  margin-bottom: 0.75rem;
+  max-width: 420px;
+  letter-spacing: -0.01em;
+}
+.pillar-intro p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  max-width: 400px;
+  margin-bottom: 2rem;
+}
+.btn-begin {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 6px;
   background: var(--navy);
   color: #fff;
-  font-size: 0.75rem;
+  font-family: var(--font);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.35rem 0.85rem;
-  border-radius: 2rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  padding: 12px 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-begin:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,32,111,0.2);
 }
 
-.pillar-badge .pillar-icon { font-size: 0.9rem; }
+/* ═══════════════════════════════════
+   QUIZ
+   ═══════════════════════════════════ */
+.quiz { padding-top: 5.5rem; width: 100%; }
 
-.question-counter {
-  font-size: 0.85rem;
+.quiz-inner {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+
+.quiz-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.quiz-pillar-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: rgba(0,32,111,0.06);
+  padding: 6px 12px;
+  border-radius: 100px;
+}
+.quiz-counter {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--gray-400);
-  margin-bottom: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Question card */
+.question-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 24px 24px;
+  width: 100%;
+  animation: cardIn 0.35s var(--ease) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .question-text {
-  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 3vw, 1.3rem);
+  line-height: 1.4;
+  color: var(--dark);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+/* Descriptive answer options */
+.answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.answer-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.answer-option:hover {
+  border-color: var(--navy);
+  transform: translateX(4px);
+}
+.answer-option:hover .answer-dot {
+  border-color: var(--navy);
+  background: var(--navy);
+}
+.answer-option:hover .answer-dot::after {
+  width: 6px;
+  height: 6px;
+}
+
+.answer-dot {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--gray-300);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.answer-dot::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--white);
+  transition: all 0.2s;
+}
+
+.answer-label {
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--gray-600);
   line-height: 1.4;
-  max-width: var(--max-w);
-  width: 100%;
-  font-style: italic;
+  transition: color 0.2s;
 }
 
-/* Statement Card */
-.statement-card {
-  background: #fff;
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 1.5rem;
-  width: 100%;
-  max-width: var(--max-w);
-  margin-top: 1.5rem;
-}
-
-.statement-text {
-  font-size: 1.1rem;
-  line-height: 1.5;
-  color: var(--dark);
-  margin-bottom: 1.25rem;
-  font-weight: 500;
-}
-
-/* Rating Scale */
-.rating-scale {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.rating-option {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 0.5rem;
-  border: 2px solid var(--gray-200);
-  border-radius: var(--card-radius);
-  cursor: pointer;
-  transition: border-color var(--transition), background var(--transition), transform 0.15s;
-  user-select: none;
-  text-align: center;
-  min-height: 56px;
-}
-
-.rating-label {
-  font-size: 0.85rem;
-  color: var(--gray-600);
-  line-height: 1.3;
-  font-weight: 600;
-}
-
-@media (hover: hover) {
-  .rating-option:hover {
-    border-color: var(--blue);
-    transform: scale(1.03);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
-  .rating-option:hover .rating-label {
-    color: var(--navy);
-  }
-}
-
-.rating-option.selected {
+.answer-option.selected {
   border-color: var(--navy);
   background: rgba(0,32,111,0.04);
 }
-.rating-option.selected .rating-label {
-  color: var(--navy);
+.answer-option.selected .answer-dot {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+.answer-option.selected .answer-dot::after {
+  width: 6px;
+  height: 6px;
+}
+.answer-option.selected .answer-label { color: var(--navy); font-weight: 600; }
+.answer-option.locked { pointer-events: none; }
+
+/* Quiz nav */
+.quiz-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 0 2px;
 }
 
-.rating-option.locked { pointer-events: none; }
-
-.back-link {
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
-  color: var(--gray-400);
-  cursor: pointer;
-  border: none;
-  background: none;
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 0;
   transition: color 0.15s;
 }
-.back-link:hover { color: var(--dark); }
+.btn-back:hover { color: var(--dark); }
 
-/* ─── Pillar Interstitial ─── */
-.interstitial {
+.section-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  transition: all 0.3s var(--ease);
+}
+.section-dot.filled { background: var(--navy); }
+.section-dot.current {
+  background: var(--navy);
+  width: 24px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════
+   PILLAR RESULT
+   ═══════════════════════════════════ */
+.pillar-result {
   justify-content: center;
   text-align: center;
 }
 
-.interstitial-icon {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 1.5rem;
+.pr-ring-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1.5rem;
 }
-
-.check-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--green);
+.pr-ring-wrap svg { transform: rotate(-90deg); }
+.pr-ring-bg {
+  fill: none;
+  stroke: var(--gray-200);
+  stroke-width: 6;
+}
+.pr-ring-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 1s var(--ease);
+}
+.pr-ring-score {
+  position: absolute;
+  inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
-  animation: bounceIn 0.5s ease;
+}
+.pr-ring-num {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.75rem;
+  color: var(--dark);
+  line-height: 1;
+}
+.pr-ring-label {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  font-weight: 500;
 }
 
-@keyframes bounceIn {
-  0% { transform: scale(0); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-.check-circle svg {
-  width: 40px;
-  height: 40px;
-  stroke: #fff;
-  stroke-width: 3;
-  fill: none;
-  stroke-dasharray: 60;
-  stroke-dashoffset: 60;
-  animation: drawCheck 0.4s ease 0.3s forwards;
-}
-
-@keyframes drawCheck {
-  to { stroke-dashoffset: 0; }
-}
-
-.interstitial h2 {
-  font-size: 1.5rem;
+.pr-title {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.4rem;
   color: var(--navy);
   margin-bottom: 0.5rem;
 }
-
-.interstitial .pillar-score {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--dark);
-  margin-bottom: 0.25rem;
+.pr-insight {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  max-width: 400px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
 }
 
-.interstitial .pillar-score-label {
-  font-size: 0.9rem;
-  color: var(--gray-400);
-  margin-bottom: 2rem;
-}
-
-.btn-secondary {
+.btn-continue {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   background: var(--navy);
   color: #fff;
   font-family: var(--font);
   font-weight: 600;
-  font-size: 1rem;
-  padding: 0.85rem 2rem;
+  font-size: 0.95rem;
+  padding: 12px 28px;
   border: none;
-  border-radius: var(--btn-radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
-  min-height: 56px;
+}
+.btn-continue:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,32,111,0.2);
 }
 
-@media (hover: hover) {
-  .btn-secondary:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 16px rgba(0,32,111,0.25);
-  }
-}
-
-/* ─── Lead Capture Screen ─── */
+/* ═══════════════════════════════════
+   LEAD CAPTURE
+   ═══════════════════════════════════ */
 .lead-capture {
   justify-content: center;
   text-align: center;
 }
-
-.blurred-score {
-  position: relative;
-  margin-bottom: 2rem;
+.lead-capture h2 {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.75rem;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+.lead-capture .lead-sub {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  max-width: 400px;
+  margin: 0 auto 2rem;
 }
 
-.blurred-score .score-preview {
+.blurred-preview { margin-bottom: 2rem; }
+.blurred-preview .bp-score {
+  font-family: var(--font);
+  font-weight: 600;
   font-size: 5rem;
-  font-weight: 700;
-  filter: blur(6px);
+  filter: blur(7px);
   user-select: none;
   line-height: 1;
 }
-
-.blurred-score .tier-preview {
-  font-size: 1.1rem;
+.blurred-preview .bp-tier {
+  font-size: 1rem;
   font-weight: 600;
-  filter: blur(4px);
+  filter: blur(5px);
   user-select: none;
   margin-top: 0.25rem;
 }
 
-.lead-capture h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--navy);
-  margin-bottom: 0.5rem;
-}
-
-.lead-capture .lead-subtitle {
-  color: var(--gray-600);
-  margin-bottom: 2rem;
-  max-width: 420px;
-}
-
 .lead-form {
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 10px;
 }
-
 .lead-form input {
   font-family: var(--font);
-  font-size: 1rem;
-  padding: 0.85rem 1rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 12px 14px;
   border: 2px solid var(--gray-200);
-  border-radius: var(--btn-radius);
-  transition: border-color 0.15s;
+  border-radius: var(--radius-sm);
+  background: var(--white);
   outline: none;
-  width: 100%;
+  transition: border-color 0.15s;
 }
-
 .lead-form input:focus { border-color: var(--navy); }
-
 .lead-form input.error { border-color: var(--red); }
 
 .form-error {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--red);
   text-align: left;
   display: none;
 }
-
 .form-error.visible { display: block; }
+
+.btn-reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  margin-top: 4px;
+}
+.btn-reveal:hover { background: var(--red-hover); transform: translateY(-1px); }
 
 .skip-link {
   margin-top: 1rem;
   font-size: 0.8rem;
+  font-weight: 500;
   color: var(--gray-400);
   cursor: pointer;
   border: none;
   background: none;
   font-family: var(--font);
   text-decoration: underline;
-  transition: color 0.15s;
+  text-underline-offset: 2px;
 }
 .skip-link:hover { color: var(--gray-600); }
 
 .privacy-note {
   margin-top: 0.75rem;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--gray-400);
 }
 
-/* ─── Results Screen ─── */
+/* ═══════════════════════════════════
+   RESULTS
+   ═══════════════════════════════════ */
 .results {
   padding-top: 2rem;
   padding-bottom: 4rem;
 }
-
 .results-inner {
   width: 100%;
-  max-width: var(--max-w);
+  max-width: 680px;
 }
 
-/* Score Hero */
+/* Score Hero — navy card */
 .score-hero {
   text-align: center;
   padding: 3rem 1.5rem;
-  background: #fff;
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  margin-bottom: 2rem;
+  background: var(--navy);
+  border-radius: var(--radius);
+  color: #fff;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
+.score-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(254,84,79,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(252,185,0,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+.score-hero * { position: relative; }
 
-.score-number {
-  font-size: clamp(4rem, 12vw, 6rem);
-  font-weight: 700;
+.sh-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0.75rem;
+}
+.sh-number {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(4.5rem, 14vw, 7rem);
   line-height: 1;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.03em;
 }
-
-.score-total {
-  font-size: 1.2rem;
-  color: var(--gray-400);
+.sh-total {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.5);
   font-weight: 500;
 }
-
-.tier-badge {
+.sh-tier {
   display: inline-block;
-  padding: 0.5rem 1.25rem;
-  border-radius: 2rem;
+  padding: 8px 20px;
+  border-radius: 100px;
   font-weight: 700;
-  font-size: 1rem;
-  margin-top: 1rem;
-  color: #fff;
+  font-size: 0.9rem;
+  margin-top: 1.25rem;
 }
-
-.tier-message {
+.sh-message {
   margin-top: 1rem;
-  font-size: 1rem;
-  color: var(--gray-600);
-  max-width: 480px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  max-width: 460px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.6;
 }
 
-/* Radar Chart */
-.radar-wrap {
-  background: #fff;
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+/* Radar */
+.radar-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+.radar-section h3 {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--navy);
+  margin-bottom: 1rem;
   text-align: center;
 }
-
-.radar-wrap h3 {
-  font-size: 1.1rem;
-  color: var(--navy);
-  margin-bottom: 1rem;
-}
-
 .radar-container {
-  position: relative;
-  max-width: 420px;
+  max-width: 380px;
   margin: 0 auto;
 }
-
-.radar-container canvas {
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* Bar Chart Fallback (small screens) */
-.bar-chart-fallback {
-  display: none;
-  padding: 0 0.5rem;
-}
-
-.bar-item {
-  margin-bottom: 1rem;
-}
-
-.bar-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-  display: flex;
-  justify-content: space-between;
-}
-
-.bar-track {
-  height: 12px;
-  background: var(--gray-200);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 6px;
-  transition: width 1s ease;
-  width: 0%;
-}
+.radar-container canvas { width: 100% !important; height: auto !important; }
 
 /* Pillar Breakdown Cards */
-.pillar-cards {
+.breakdown-cards {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 12px;
+  margin-bottom: 1.5rem;
 }
-
-.pillar-card {
-  background: #fff;
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+.bd-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 1.5rem;
   opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(12px);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
 }
+.bd-card.visible { opacity: 1; transform: translateY(0); }
 
-.pillar-card.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.pillar-card-header {
+.bd-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
 }
-
-.pillar-card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
+.bd-title {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.05rem;
   color: var(--navy);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
+}
+.bd-score-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: var(--white);
 }
 
-.pillar-card-score {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--gray-600);
-}
-
-.pillar-progress {
-  height: 8px;
+.bd-bar {
+  height: 6px;
   background: var(--gray-200);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
   margin-bottom: 1rem;
 }
-
-.pillar-progress-fill {
+.bd-bar-fill {
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s ease;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.8s var(--ease);
 }
 
-.pillar-feedback { margin-bottom: 0.75rem; }
-
-.pillar-feedback strong {
-  font-size: 0.8rem;
+.bd-feedback {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 0.75rem;
+}
+.bd-fb-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--gray-600);
+}
+.bd-fb-item.good { background: rgba(45,184,122,0.08); }
+.bd-fb-item.fix { background: rgba(254,84,79,0.06); }
+.bd-fb-label {
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
   display: block;
-  margin-bottom: 0.25rem;
 }
+.bd-fb-item.good .bd-fb-label { color: var(--green); }
+.bd-fb-item.fix .bd-fb-label { color: var(--red); }
 
-.pillar-feedback p {
-  font-size: 0.9rem;
+.bd-rec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(0,32,111,0.04);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+.bd-rec-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: var(--navy);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+.bd-rec-text {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--gray-600);
   line-height: 1.5;
 }
-
-.product-rec {
-  background: rgba(0,32,111,0.04);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-top: 0.75rem;
-}
-
-.product-rec-title {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--navy);
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-}
-
-.product-rec p {
-  font-size: 0.9rem;
-  color: var(--gray-600);
-}
-
-.product-rec a {
+.bd-rec-text a {
   color: var(--red);
   font-weight: 600;
   text-decoration: none;
 }
-
-.product-rec a:hover { text-decoration: underline; }
+.bd-rec-text a:hover { text-decoration: underline; }
 
 /* Action Plan */
 .action-plan {
-  background: #fff;
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
-
 .action-plan h3 {
-  font-size: 1.2rem;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.15rem;
   color: var(--navy);
   margin-bottom: 1rem;
 }
-
 .action-step {
   display: flex;
-  gap: 1rem;
+  gap: 12px;
   align-items: flex-start;
-  padding: 1rem 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--gray-200);
 }
-
 .action-step:last-child { border-bottom: none; }
-
-.action-number {
+.action-num {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--navy);
   color: #fff;
@@ -763,253 +988,273 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
-
-.action-content h4 {
-  font-size: 1rem;
+.action-body h4 {
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2px;
 }
-
-.action-content p {
-  font-size: 0.9rem;
+.action-body p {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--gray-600);
+  line-height: 1.5;
 }
+.action-body a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: none;
+}
+.action-body a:hover { text-decoration: underline; }
 
 /* CTA Block */
 .cta-block {
-  background: var(--navy);
-  border-radius: var(--card-radius);
+  background: var(--card);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
   padding: 2.5rem 1.5rem;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
-
 .cta-block h3 {
-  color: #fff;
-  font-size: 1.4rem;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--navy);
   margin-bottom: 0.5rem;
 }
-
 .cta-block p {
-  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  color: var(--gray-500);
   margin-bottom: 1.5rem;
-  max-width: 480px;
+  max-width: 440px;
   margin-left: auto;
   margin-right: auto;
+  font-size: 0.95rem;
 }
-
-.cta-block .btn-primary {
-  font-size: 1rem;
-  padding: 0.85rem 2rem;
-}
-
-/* Share & Print */
-.share-row {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
-
-.share-btn {
+.btn-cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.25rem;
-  border-radius: var(--btn-radius);
+  gap: 8px;
+  background: var(--red);
+  color: #fff;
   font-family: var(--font);
-  font-size: 0.85rem;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+}
+.btn-cta:hover { background: var(--red-hover); transform: translateY(-1px); }
+
+/* Share + Retake */
+.results-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.share-btn, .retake-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 0.82rem;
   font-weight: 600;
   border: 2px solid var(--gray-200);
-  background: #fff;
+  background: var(--card);
   color: var(--dark);
   cursor: pointer;
   transition: border-color 0.15s, transform 0.15s;
 }
+.share-btn:hover, .retake-btn:hover { border-color: var(--navy); transform: scale(1.02); }
 
-@media (hover: hover) {
-  .share-btn:hover {
-    border-color: var(--navy);
-    transform: scale(1.02);
-  }
+/* ═══════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════ */
+@media (max-width: 520px) {
+  .bd-feedback { grid-template-columns: 1fr; }
+  .question-card { padding: 22px 18px 20px; }
 }
-
-/* ─── Responsive ─── */
-@media (max-width: 640px) {
-  .screen { padding: 1.5rem 1rem; }
-  .score-hero { padding: 2rem 1rem; }
-  .cta-block { padding: 2rem 1rem; }
-}
-
-@media (max-width: 360px) {
-  .radar-wrap .radar-container { display: none; }
-  .bar-chart-fallback { display: block; }
-}
-
-@media (min-width: 840px) {
-  .pillar-cards {
+@media (min-width: 740px) {
+  .breakdown-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 12px;
   }
 }
 
-/* ─── Print ─── */
+/* ═══════════════════════════════════
+   PRINT
+   ═══════════════════════════════════ */
 @media print {
   body { background: #fff; }
-  .progress-bar, .share-row, .cta-block, .back-link, .skip-link, .btn-primary, .btn-secondary { display: none !important; }
+  .quiz-header, .results-actions, .cta-block, .btn-back, .skip-link, .btn-start, .btn-begin, .btn-continue, .btn-reveal { display: none !important; }
   .screen { display: none !important; min-height: 0; padding: 0; animation: none; }
   .screen.results { display: flex !important; padding: 1rem; }
   .results-inner { max-width: 100%; }
-  .score-hero, .radar-wrap, .pillar-card, .action-plan { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
-  .pillar-card { opacity: 1 !important; transform: none !important; }
-  .print-header { display: block !important; text-align: center; margin-bottom: 1.5rem; }
-  .print-header img { width: 150px; }
-  .print-header p { font-size: 0.8rem; color: var(--gray-400); }
-}
-
-.print-header { display: none; }
-
-/* ─── Utility ─── */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  border: 0;
+  .score-hero { break-inside: avoid; }
+  .bd-card { opacity: 1 !important; transform: none !important; box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .radar-section, .action-plan { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
 }
 </style>
 </head>
 <body>
 
-<!-- Progress Bar -->
-<div class="progress-bar" id="progressBar"></div>
+<!-- Quiz Header -->
+<div class="quiz-header" id="quizHeader">
+  <div class="quiz-header-bar">
+    <button class="btn-restart" onclick="restartQuiz()"><i class="ph-fill ph-arrow-counter-clockwise"></i> Restart</button>
+    <div class="quiz-header-logo"><svg width="536" height="110" viewBox="0 0 536 110" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M134.266 36.3857C128.863 32.3682 123.737 31.8141 120.551 31.8141C116.256 31.8141 112.377 32.7145 109.121 36.0394C106.351 38.8794 105.104 42.3428 105.104 46.4296C105.104 48.6461 105.45 51.9017 107.875 54.4646C109.676 56.4041 112.169 57.3739 114.316 58.1358L118.126 59.4519C119.442 59.9368 122.282 60.9758 123.529 62.0148C124.499 62.846 125.122 63.8158 125.122 65.3397C125.122 67.0714 124.36 68.3182 123.46 69.0801C121.936 70.3962 119.996 70.6733 118.611 70.6733C116.464 70.6733 114.594 70.1192 112.793 69.0109C111.546 68.2489 109.676 66.6558 108.498 65.4782L102.957 73.0977C104.688 74.8294 107.39 76.9767 109.745 78.1542C112.654 79.6089 115.563 80.0937 118.888 80.0937C121.936 80.0937 127.893 79.6781 131.98 75.3835C134.404 72.8899 136.067 68.7338 136.067 63.9543C136.067 61.2529 135.374 57.928 132.672 55.3651C130.871 53.6334 128.378 52.5944 126.369 51.8325L122.906 50.5164C119.789 49.3388 118.195 48.9232 117.087 47.8842C116.394 47.2608 116.048 46.4296 116.048 45.3213C116.048 44.1437 116.533 43.1047 117.226 42.412C118.473 41.0267 120.273 40.8189 121.728 40.8189C123.044 40.8189 126.023 41.0267 129.486 44.1437L134.266 36.3857Z" fill="#141B38"/><path d="M140.486 79.0547H150.461V63.2616C150.461 62.2226 150.53 58.7592 152.4 56.9583C153.37 56.0578 154.548 55.7115 155.864 55.7115C156.903 55.7115 158.149 55.9193 159.188 56.9583C160.712 58.4822 160.782 60.9065 160.782 62.9846V79.0547H170.756V63.6773C170.756 61.6685 170.964 59.2441 172.28 57.5817C173.111 56.4734 174.497 55.7115 176.159 55.7115C177.614 55.7115 178.93 56.3349 179.761 57.3739C181.077 59.0363 181.077 61.807 181.077 63.4002V79.0547H191.052V59.5212C191.052 57.3046 190.844 53.1485 187.865 50.3086C185.995 48.5076 182.947 47.3993 179.207 47.3993C176.782 47.3993 174.774 47.8149 172.626 49.131C170.618 50.3778 169.44 51.8325 168.678 53.0793C167.847 51.209 166.531 49.6852 164.938 48.7847C162.86 47.5379 160.435 47.3993 159.119 47.3993C156.764 47.3993 153.024 47.8842 150.461 51.7632V48.1613H140.486V79.0547Z" fill="#141B38"/><path d="M220.475 51.6247C217.635 47.7457 213.409 47.1222 210.777 47.1222C206.483 47.1222 202.742 48.6461 200.041 51.3476C197.201 54.1876 195.261 58.6207 195.261 63.8158C195.261 67.9026 196.508 71.9201 199.764 75.3835C203.158 78.9854 206.898 80.0937 211.331 80.0937C213.894 80.0937 217.773 79.4703 220.475 75.3142V79.0547H230.449V48.1613H220.475V51.6247ZM213.271 55.7115C215.072 55.7115 217.288 56.4041 218.812 57.8588C220.267 59.2441 221.098 61.3221 221.098 63.5387C221.098 66.1709 219.99 68.1104 218.674 69.3572C217.358 70.6733 215.487 71.5045 213.479 71.5045C211.124 71.5045 208.976 70.5348 207.591 69.0801C206.69 68.1104 205.513 66.3094 205.513 63.5387C205.513 60.768 206.76 58.967 207.799 57.928C209.115 56.6119 211.124 55.7115 213.271 55.7115Z" fill="#141B38"/><path d="M258.964 49.7544C256.47 48.2998 253.284 47.1222 248.712 47.1222C245.872 47.1222 242.132 47.6764 239.361 50.2393C237.56 51.9017 236.383 54.3954 236.383 57.3739C236.383 59.729 237.145 61.4607 238.599 62.9846C239.915 64.3007 241.785 65.2704 243.586 65.8246L246.08 66.5865C247.535 67.0021 248.435 67.2792 249.128 67.6948C250.028 68.2489 250.236 68.9416 250.236 69.4957C250.236 70.2577 249.821 71.0196 249.197 71.5045C248.297 72.1972 246.703 72.1972 246.08 72.1972C244.764 72.1972 243.309 71.9201 241.924 71.2274C240.885 70.7426 239.5 69.7728 238.53 68.9416L234.305 75.6606C238.322 79.1932 242.824 80.0937 246.981 80.0937C250.236 80.0937 253.977 79.6089 257.024 76.5611C258.41 75.1757 260.211 72.5435 260.211 68.4567C260.211 66.1016 259.587 64.2314 257.786 62.569C256.193 61.1143 254.392 60.4217 252.661 59.8675L250.028 59.0363C248.782 58.6207 247.742 58.4129 247.05 57.9973C246.565 57.7202 246.08 57.3046 246.08 56.6119C246.08 56.1271 246.357 55.5729 246.703 55.2266C247.327 54.6032 248.504 54.3261 249.543 54.3261C251.483 54.3261 253.492 55.1573 255.016 56.0578L258.964 49.7544Z" fill="#141B38"/><path d="M264.339 79.0547H274.313V63.608C274.313 62.0841 274.382 59.1056 276.391 57.1661C276.945 56.6119 278.192 55.6422 280.339 55.6422C281.794 55.6422 283.318 56.1271 284.218 57.0275C285.812 58.5514 285.881 61.0451 285.881 63.1924V79.0547H295.855V59.4519C295.855 57.0968 295.648 53.2871 292.808 50.4471C290.106 47.6764 286.504 47.33 284.08 47.33C281.863 47.33 280.132 47.5379 278.054 48.6461C276.876 49.2695 275.56 50.3086 274.313 51.8325V28.5585H264.339V79.0547Z" fill="#141B38"/><path d="M316.822 32.8531V79.0547H334.208C337.048 79.0547 342.59 78.7776 346.399 75.1064C348.2 73.3055 350.001 70.3962 350.001 65.7553C350.001 61.6685 348.547 59.0363 347.023 57.5124C345.36 55.85 342.867 54.7417 340.65 54.3954C341.758 53.9105 343.352 52.9407 344.529 51.0012C345.776 48.9925 346.053 46.9144 346.053 45.1135C346.053 43.1047 345.707 39.2257 342.728 36.3857C339.126 32.9916 333.446 32.8531 330.953 32.8531H316.822ZM327.351 41.1652H329.013C330.953 41.1652 333.031 41.1652 334.555 42.3428C335.386 42.9662 336.355 44.213 336.355 46.2218C336.355 48.2305 335.455 49.6159 334.485 50.3086C332.961 51.4169 330.537 51.6247 329.082 51.6247H327.351V41.1652ZM327.351 59.5212H330.26C332.407 59.5212 336.009 59.5212 337.879 61.2529C338.572 61.8763 339.334 63.1231 339.334 64.9933C339.334 66.6558 338.78 67.9719 337.81 68.8723C335.871 70.6733 332.615 70.7426 329.914 70.7426H327.351V59.5212Z" fill="#141B38"/><path d="M378.384 51.6247C375.544 47.7457 371.318 47.1222 368.686 47.1222C364.392 47.1222 360.651 48.6461 357.95 51.3476C355.11 54.1876 353.17 58.6207 353.17 63.8158C353.17 67.9026 354.417 71.9201 357.673 75.3835C361.067 78.9854 364.807 80.0937 369.24 80.0937C371.803 80.0937 375.682 79.4703 378.384 75.3142V79.0547H388.358V48.1613H378.384V51.6247ZM371.18 55.7115C372.981 55.7115 375.197 56.4041 376.721 57.8588C378.176 59.2441 379.007 61.3221 379.007 63.5387C379.007 66.1709 377.899 68.1104 376.583 69.3572C375.267 70.6733 373.396 71.5045 371.388 71.5045C369.033 71.5045 366.885 70.5348 365.5 69.0801C364.599 68.1104 363.422 66.3094 363.422 63.5387C363.422 60.768 364.669 58.967 365.708 57.928C367.024 56.6119 369.033 55.7115 371.18 55.7115Z" fill="#141B38"/><path d="M394.292 28.5585V79.0547H404.266V28.5585H394.292Z" fill="#141B38"/><path d="M410.477 28.5585V79.0547H420.452V28.5585H410.477Z" fill="#141B38"/><path d="M461.159 63.608C461.159 59.6597 459.635 55.2266 456.518 52.1095C453.747 49.3388 449.037 47.1222 443.011 47.1222C436.984 47.1222 432.274 49.3388 429.503 52.1095C426.386 55.2266 424.862 59.6597 424.862 63.608C424.862 67.5562 426.386 71.9894 429.503 75.1064C432.274 77.8772 436.984 80.0937 443.011 80.0937C449.037 80.0937 453.747 77.8772 456.518 75.1064C459.635 71.9894 461.159 67.5562 461.159 63.608ZM443.011 55.5729C445.296 55.5729 447.167 56.3349 448.621 57.7895C450.076 59.2441 450.907 61.1143 450.907 63.608C450.907 66.1016 450.076 67.9719 448.621 69.4265C447.167 70.8811 445.296 71.6431 443.08 71.6431C440.448 71.6431 438.647 70.6733 437.4 69.4265C436.222 68.2489 435.114 66.448 435.114 63.608C435.114 61.1143 435.945 59.2441 437.4 57.7895C438.855 56.3349 440.725 55.5729 443.011 55.5729Z" fill="#141B38"/><path d="M500.073 63.608C500.073 59.6597 498.549 55.2266 495.432 52.1095C492.661 49.3388 487.951 47.1222 481.925 47.1222C475.899 47.1222 471.189 49.3388 468.418 52.1095C465.301 55.2266 463.777 59.6597 463.777 63.608C463.777 67.5562 465.301 71.9894 468.418 75.1064C471.189 77.8772 475.899 80.0937 481.925 80.0937C487.951 80.0937 492.661 77.8772 495.432 75.1064C498.549 71.9894 500.073 67.5562 500.073 63.608ZM481.925 55.5729C484.211 55.5729 486.081 56.3349 487.536 57.7895C488.99 59.2441 489.822 61.1143 489.822 63.608C489.822 66.1016 488.99 67.9719 487.536 69.4265C486.081 70.8811 484.211 71.6431 481.994 71.6431C479.362 71.6431 477.561 70.6733 476.314 69.4265C475.137 68.2489 474.028 66.448 474.028 63.608C474.028 61.1143 474.86 59.2441 476.314 57.7895C477.769 56.3349 479.639 55.5729 481.925 55.5729Z" fill="#141B38"/><path d="M504.215 79.0547H514.19V63.1924C514.19 61.1836 514.467 58.967 516.129 57.3046C516.891 56.4734 518.207 55.6422 520.285 55.6422C522.086 55.6422 523.333 56.2656 524.095 57.0275C525.688 58.6207 525.758 61.1836 525.758 63.1924V79.0547H535.732V59.5212C535.732 57.0275 535.524 53.3563 532.615 50.4471C529.983 47.8149 526.45 47.33 523.749 47.33C520.839 47.33 517.238 47.9535 514.19 51.8325V48.1613H504.215V79.0547Z" fill="#141B38"/><path fill-rule="evenodd" clip-rule="evenodd" d="M80.3445 51.8911C80.3445 24.6311 62.4761 2.53235 40.4263 2.53235C18.3766 2.53235 0.5 24.6311 0.5 51.8911C0.5 78.0241 16.874 99.347 37.6089 101.135L35.4039 108.118L49.2299 106.942L44.379 101.013C64.5667 98.563 80.3445 77.5096 80.3445 51.8911Z" fill="#FE544F"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.9451 19.8853L51.8663 39.7078L71.7719 40.2796L57.3725 53.6681L68.7455 70.1175L49.5859 66.516L43.7775 85.6759L34.9582 68.5183L17.1507 76.6779L24.001 58.2844L6.63354 49.5245L25.2249 43.5454L20.0948 25.2308L37.6835 35.2583L49.9451 19.8853Z" fill="white"/></svg></div>
+  </div>
+  <div class="quiz-progress-track">
+    <div class="quiz-progress-fill" id="quizProgressFill"></div>
+  </div>
+</div>
 
-<!-- SCREEN 1: Welcome -->
+<!-- WELCOME -->
 <section class="screen welcome active" id="screenWelcome">
-  <img class="logo" src="logo.png" alt="Smash Balloon">
+  <div class="welcome-logo"><svg width="536" height="110" viewBox="0 0 536 110" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M134.266 36.3857C128.863 32.3682 123.737 31.8141 120.551 31.8141C116.256 31.8141 112.377 32.7145 109.121 36.0394C106.351 38.8794 105.104 42.3428 105.104 46.4296C105.104 48.6461 105.45 51.9017 107.875 54.4646C109.676 56.4041 112.169 57.3739 114.316 58.1358L118.126 59.4519C119.442 59.9368 122.282 60.9758 123.529 62.0148C124.499 62.846 125.122 63.8158 125.122 65.3397C125.122 67.0714 124.36 68.3182 123.46 69.0801C121.936 70.3962 119.996 70.6733 118.611 70.6733C116.464 70.6733 114.594 70.1192 112.793 69.0109C111.546 68.2489 109.676 66.6558 108.498 65.4782L102.957 73.0977C104.688 74.8294 107.39 76.9767 109.745 78.1542C112.654 79.6089 115.563 80.0937 118.888 80.0937C121.936 80.0937 127.893 79.6781 131.98 75.3835C134.404 72.8899 136.067 68.7338 136.067 63.9543C136.067 61.2529 135.374 57.928 132.672 55.3651C130.871 53.6334 128.378 52.5944 126.369 51.8325L122.906 50.5164C119.789 49.3388 118.195 48.9232 117.087 47.8842C116.394 47.2608 116.048 46.4296 116.048 45.3213C116.048 44.1437 116.533 43.1047 117.226 42.412C118.473 41.0267 120.273 40.8189 121.728 40.8189C123.044 40.8189 126.023 41.0267 129.486 44.1437L134.266 36.3857Z" fill="#141B38"/><path d="M140.486 79.0547H150.461V63.2616C150.461 62.2226 150.53 58.7592 152.4 56.9583C153.37 56.0578 154.548 55.7115 155.864 55.7115C156.903 55.7115 158.149 55.9193 159.188 56.9583C160.712 58.4822 160.782 60.9065 160.782 62.9846V79.0547H170.756V63.6773C170.756 61.6685 170.964 59.2441 172.28 57.5817C173.111 56.4734 174.497 55.7115 176.159 55.7115C177.614 55.7115 178.93 56.3349 179.761 57.3739C181.077 59.0363 181.077 61.807 181.077 63.4002V79.0547H191.052V59.5212C191.052 57.3046 190.844 53.1485 187.865 50.3086C185.995 48.5076 182.947 47.3993 179.207 47.3993C176.782 47.3993 174.774 47.8149 172.626 49.131C170.618 50.3778 169.44 51.8325 168.678 53.0793C167.847 51.209 166.531 49.6852 164.938 48.7847C162.86 47.5379 160.435 47.3993 159.119 47.3993C156.764 47.3993 153.024 47.8842 150.461 51.7632V48.1613H140.486V79.0547Z" fill="#141B38"/><path d="M220.475 51.6247C217.635 47.7457 213.409 47.1222 210.777 47.1222C206.483 47.1222 202.742 48.6461 200.041 51.3476C197.201 54.1876 195.261 58.6207 195.261 63.8158C195.261 67.9026 196.508 71.9201 199.764 75.3835C203.158 78.9854 206.898 80.0937 211.331 80.0937C213.894 80.0937 217.773 79.4703 220.475 75.3142V79.0547H230.449V48.1613H220.475V51.6247ZM213.271 55.7115C215.072 55.7115 217.288 56.4041 218.812 57.8588C220.267 59.2441 221.098 61.3221 221.098 63.5387C221.098 66.1709 219.99 68.1104 218.674 69.3572C217.358 70.6733 215.487 71.5045 213.479 71.5045C211.124 71.5045 208.976 70.5348 207.591 69.0801C206.69 68.1104 205.513 66.3094 205.513 63.5387C205.513 60.768 206.76 58.967 207.799 57.928C209.115 56.6119 211.124 55.7115 213.271 55.7115Z" fill="#141B38"/><path d="M258.964 49.7544C256.47 48.2998 253.284 47.1222 248.712 47.1222C245.872 47.1222 242.132 47.6764 239.361 50.2393C237.56 51.9017 236.383 54.3954 236.383 57.3739C236.383 59.729 237.145 61.4607 238.599 62.9846C239.915 64.3007 241.785 65.2704 243.586 65.8246L246.08 66.5865C247.535 67.0021 248.435 67.2792 249.128 67.6948C250.028 68.2489 250.236 68.9416 250.236 69.4957C250.236 70.2577 249.821 71.0196 249.197 71.5045C248.297 72.1972 246.703 72.1972 246.08 72.1972C244.764 72.1972 243.309 71.9201 241.924 71.2274C240.885 70.7426 239.5 69.7728 238.53 68.9416L234.305 75.6606C238.322 79.1932 242.824 80.0937 246.981 80.0937C250.236 80.0937 253.977 79.6089 257.024 76.5611C258.41 75.1757 260.211 72.5435 260.211 68.4567C260.211 66.1016 259.587 64.2314 257.786 62.569C256.193 61.1143 254.392 60.4217 252.661 59.8675L250.028 59.0363C248.782 58.6207 247.742 58.4129 247.05 57.9973C246.565 57.7202 246.08 57.3046 246.08 56.6119C246.08 56.1271 246.357 55.5729 246.703 55.2266C247.327 54.6032 248.504 54.3261 249.543 54.3261C251.483 54.3261 253.492 55.1573 255.016 56.0578L258.964 49.7544Z" fill="#141B38"/><path d="M264.339 79.0547H274.313V63.608C274.313 62.0841 274.382 59.1056 276.391 57.1661C276.945 56.6119 278.192 55.6422 280.339 55.6422C281.794 55.6422 283.318 56.1271 284.218 57.0275C285.812 58.5514 285.881 61.0451 285.881 63.1924V79.0547H295.855V59.4519C295.855 57.0968 295.648 53.2871 292.808 50.4471C290.106 47.6764 286.504 47.33 284.08 47.33C281.863 47.33 280.132 47.5379 278.054 48.6461C276.876 49.2695 275.56 50.3086 274.313 51.8325V28.5585H264.339V79.0547Z" fill="#141B38"/><path d="M316.822 32.8531V79.0547H334.208C337.048 79.0547 342.59 78.7776 346.399 75.1064C348.2 73.3055 350.001 70.3962 350.001 65.7553C350.001 61.6685 348.547 59.0363 347.023 57.5124C345.36 55.85 342.867 54.7417 340.65 54.3954C341.758 53.9105 343.352 52.9407 344.529 51.0012C345.776 48.9925 346.053 46.9144 346.053 45.1135C346.053 43.1047 345.707 39.2257 342.728 36.3857C339.126 32.9916 333.446 32.8531 330.953 32.8531H316.822ZM327.351 41.1652H329.013C330.953 41.1652 333.031 41.1652 334.555 42.3428C335.386 42.9662 336.355 44.213 336.355 46.2218C336.355 48.2305 335.455 49.6159 334.485 50.3086C332.961 51.4169 330.537 51.6247 329.082 51.6247H327.351V41.1652ZM327.351 59.5212H330.26C332.407 59.5212 336.009 59.5212 337.879 61.2529C338.572 61.8763 339.334 63.1231 339.334 64.9933C339.334 66.6558 338.78 67.9719 337.81 68.8723C335.871 70.6733 332.615 70.7426 329.914 70.7426H327.351V59.5212Z" fill="#141B38"/><path d="M378.384 51.6247C375.544 47.7457 371.318 47.1222 368.686 47.1222C364.392 47.1222 360.651 48.6461 357.95 51.3476C355.11 54.1876 353.17 58.6207 353.17 63.8158C353.17 67.9026 354.417 71.9201 357.673 75.3835C361.067 78.9854 364.807 80.0937 369.24 80.0937C371.803 80.0937 375.682 79.4703 378.384 75.3142V79.0547H388.358V48.1613H378.384V51.6247ZM371.18 55.7115C372.981 55.7115 375.197 56.4041 376.721 57.8588C378.176 59.2441 379.007 61.3221 379.007 63.5387C379.007 66.1709 377.899 68.1104 376.583 69.3572C375.267 70.6733 373.396 71.5045 371.388 71.5045C369.033 71.5045 366.885 70.5348 365.5 69.0801C364.599 68.1104 363.422 66.3094 363.422 63.5387C363.422 60.768 364.669 58.967 365.708 57.928C367.024 56.6119 369.033 55.7115 371.18 55.7115Z" fill="#141B38"/><path d="M394.292 28.5585V79.0547H404.266V28.5585H394.292Z" fill="#141B38"/><path d="M410.477 28.5585V79.0547H420.452V28.5585H410.477Z" fill="#141B38"/><path d="M461.159 63.608C461.159 59.6597 459.635 55.2266 456.518 52.1095C453.747 49.3388 449.037 47.1222 443.011 47.1222C436.984 47.1222 432.274 49.3388 429.503 52.1095C426.386 55.2266 424.862 59.6597 424.862 63.608C424.862 67.5562 426.386 71.9894 429.503 75.1064C432.274 77.8772 436.984 80.0937 443.011 80.0937C449.037 80.0937 453.747 77.8772 456.518 75.1064C459.635 71.9894 461.159 67.5562 461.159 63.608ZM443.011 55.5729C445.296 55.5729 447.167 56.3349 448.621 57.7895C450.076 59.2441 450.907 61.1143 450.907 63.608C450.907 66.1016 450.076 67.9719 448.621 69.4265C447.167 70.8811 445.296 71.6431 443.08 71.6431C440.448 71.6431 438.647 70.6733 437.4 69.4265C436.222 68.2489 435.114 66.448 435.114 63.608C435.114 61.1143 435.945 59.2441 437.4 57.7895C438.855 56.3349 440.725 55.5729 443.011 55.5729Z" fill="#141B38"/><path d="M500.073 63.608C500.073 59.6597 498.549 55.2266 495.432 52.1095C492.661 49.3388 487.951 47.1222 481.925 47.1222C475.899 47.1222 471.189 49.3388 468.418 52.1095C465.301 55.2266 463.777 59.6597 463.777 63.608C463.777 67.5562 465.301 71.9894 468.418 75.1064C471.189 77.8772 475.899 80.0937 481.925 80.0937C487.951 80.0937 492.661 77.8772 495.432 75.1064C498.549 71.9894 500.073 67.5562 500.073 63.608ZM481.925 55.5729C484.211 55.5729 486.081 56.3349 487.536 57.7895C488.99 59.2441 489.822 61.1143 489.822 63.608C489.822 66.1016 488.99 67.9719 487.536 69.4265C486.081 70.8811 484.211 71.6431 481.994 71.6431C479.362 71.6431 477.561 70.6733 476.314 69.4265C475.137 68.2489 474.028 66.448 474.028 63.608C474.028 61.1143 474.86 59.2441 476.314 57.7895C477.769 56.3349 479.639 55.5729 481.925 55.5729Z" fill="#141B38"/><path d="M504.215 79.0547H514.19V63.1924C514.19 61.1836 514.467 58.967 516.129 57.3046C516.891 56.4734 518.207 55.6422 520.285 55.6422C522.086 55.6422 523.333 56.2656 524.095 57.0275C525.688 58.6207 525.758 61.1836 525.758 63.1924V79.0547H535.732V59.5212C535.732 57.0275 535.524 53.3563 532.615 50.4471C529.983 47.8149 526.45 47.33 523.749 47.33C520.839 47.33 517.238 47.9535 514.19 51.8325V48.1613H504.215V79.0547Z" fill="#141B38"/><path fill-rule="evenodd" clip-rule="evenodd" d="M80.3445 51.8911C80.3445 24.6311 62.4761 2.53235 40.4263 2.53235C18.3766 2.53235 0.5 24.6311 0.5 51.8911C0.5 78.0241 16.874 99.347 37.6089 101.135L35.4039 108.118L49.2299 106.942L44.379 101.013C64.5667 98.563 80.3445 77.5096 80.3445 51.8911Z" fill="#FE544F"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.9451 19.8853L51.8663 39.7078L71.7719 40.2796L57.3725 53.6681L68.7455 70.1175L49.5859 66.516L43.7775 85.6759L34.9582 68.5183L17.1507 76.6779L24.001 58.2844L6.63354 49.5245L25.2249 43.5454L20.0948 25.2308L37.6835 35.2583L49.9451 19.8853Z" fill="white"/></svg></div>
 
-  <h1>The Website Trust Score</h1>
-  <p class="subtitle">Discover how much trust your website actually builds — and the specific gaps costing you conversions. Score yourself across 6 critical trust pillars in under 2 minutes.</p>
+  <h1>How much does your website <em>earn</em> trust?</h1>
+  <p class="subtitle">Score yourself across 6 trust pillars. Get a report showing the exact gaps costing you conversions.</p>
 
   <div class="gauge-wrap">
     <div class="gauge-bg"></div>
     <div class="gauge-needle"></div>
   </div>
 
-  <button class="btn-primary" onclick="startQuiz()">
-    Start My Assessment
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="pillars-preview">
+    <span class="pillar-chip"><i class="ph-fill ph-star"></i> Social Proof</span>
+    <span class="pillar-chip"><i class="ph-fill ph-arrows-clockwise"></i> Freshness</span>
+    <span class="pillar-chip"><i class="ph-fill ph-video-camera"></i> Video</span>
+    <span class="pillar-chip"><i class="ph-fill ph-link"></i> Continuity</span>
+    <span class="pillar-chip"><i class="ph-fill ph-crosshair"></i> Clarity</span>
+    <span class="pillar-chip"><i class="ph-fill ph-lightning"></i> Performance</span>
+  </div>
+
+  <button class="btn-start" onclick="startQuiz()">
+    Start Assessment
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <p class="trust-line">Takes ~2 min &middot; No signup required to start &middot; Free</p>
+  <p class="trust-line">18 questions &middot; ~90 seconds &middot; Free</p>
+  <button onclick="skipToResults()" style="margin-top:1.5rem;font-family:var(--font);font-size:0.75rem;color:var(--gray-400);background:none;border:1px dashed var(--gray-300);border-radius:6px;padding:6px 14px;cursor:pointer">DEV: Skip to results</button>
 </section>
 
-<!-- SCREEN 2: Quiz Questions -->
+<!-- PILLAR INTRO -->
+<section class="screen pillar-intro" id="screenPillarIntro">
+  <div class="pillar-intro-icon" id="piIcon"></div>
+  <div class="pillar-intro-counter" id="piCounter"></div>
+  <h2 id="piTitle"></h2>
+  <p id="piSubtitle"></p>
+  <button class="btn-begin" id="piBegin">
+    Let's go
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</section>
+
+<!-- QUIZ -->
 <section class="screen quiz" id="screenQuiz">
-  <div class="quiz-header">
-    <div class="pillar-badge">
-      <span class="pillar-icon" id="pillarIcon"></span>
-      <span id="pillarName"></span>
+  <div class="quiz-inner" id="quizInner"></div>
+</section>
+
+<!-- PILLAR RESULT -->
+<section class="screen pillar-result" id="screenPillarResult">
+  <div class="pr-ring-wrap">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle class="pr-ring-bg" cx="60" cy="60" r="45"/>
+      <circle class="pr-ring-fill" id="prRingFill" cx="60" cy="60" r="45"/>
+    </svg>
+    <div class="pr-ring-score">
+      <div class="pr-ring-num" id="prScoreNum">0</div>
+      <div class="pr-ring-label" id="prRingLabel">out of 9</div>
     </div>
-    <p class="question-counter" id="questionCounter"></p>
-    <p class="question-text" id="questionText"></p>
   </div>
-  <div id="answersContainer"></div>
-  <button class="back-link" id="backBtn" onclick="goBack()">&larr; Previous question</button>
+  <div class="pr-title" id="prTitle"></div>
+  <p class="pr-insight" id="prInsight"></p>
+  <button class="btn-continue" id="prContinue">
+    Continue
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
 </section>
 
-<!-- SCREEN 2b: Pillar Interstitial -->
-<section class="screen interstitial" id="screenInterstitial">
-  <div class="check-circle" id="checkCircle">
-    <svg viewBox="0 0 40 40"><polyline points="10,22 18,30 30,12"/></svg>
-  </div>
-  <h2 id="interstitialPillar"></h2>
-  <div class="pillar-score" id="interstitialScore"></div>
-  <p class="pillar-score-label">out of 12</p>
-  <button class="btn-secondary" id="interstitialNext">Continue</button>
-</section>
-
-<!-- SCREEN 3: Lead Capture -->
+<!-- LEAD CAPTURE -->
 <section class="screen lead-capture" id="screenLead">
-  <h2>Your Trust Score is Ready</h2>
-  <p class="lead-subtitle">Enter your details to unlock your personalized trust report with actionable recommendations.</p>
+  <h2>Your report is ready</h2>
+  <p class="lead-sub">Enter your details to unlock personalized recommendations.</p>
 
-  <div class="blurred-score">
-    <div class="score-preview" id="blurredScore"></div>
-    <div class="tier-preview" id="blurredTier"></div>
+  <div class="blurred-preview">
+    <div class="bp-score" id="bpScore"></div>
+    <div class="bp-tier" id="bpTier"></div>
   </div>
 
-  <form class="lead-form" id="leadForm" onsubmit="return submitLead(event)">
-    <input type="text" name="firstName" placeholder="First name" required id="leadName" autocomplete="given-name">
+  <div class="lead-form" id="leadForm">
+    <input type="text" placeholder="First name" id="leadName" autocomplete="given-name">
     <p class="form-error" id="nameError">Please enter your name</p>
-    <input type="email" name="email" placeholder="Email address" required id="leadEmail" autocomplete="email">
+    <input type="email" placeholder="Email address" id="leadEmail" autocomplete="email">
     <p class="form-error" id="emailError">Please enter a valid email</p>
-    <input type="url" name="website" placeholder="Website URL (optional)" id="leadWebsite" autocomplete="url">
-    <button type="submit" class="btn-primary" style="width:100%">Reveal My Trust Score</button>
-  </form>
+    <input type="url" placeholder="Website URL (optional)" id="leadWebsite" autocomplete="url">
+    <button class="btn-reveal" onclick="submitLead()">Unlock My Trust Report</button>
+  </div>
   <button class="skip-link" onclick="showResults(true)">Skip for now</button>
-  <p class="privacy-note">We respect your privacy. Unsubscribe anytime.</p>
+  <p class="privacy-note">No spam. Unsubscribe anytime.</p>
 </section>
 
-<!-- SCREEN 4: Results -->
+<!-- RESULTS -->
 <section class="screen results" id="screenResults">
   <div class="results-inner">
-    <div class="print-header">
-      <img src="logo.png" alt="Smash Balloon" style="width:180px">
-      <p>Website Trust Score Report</p>
+    <div class="score-hero" id="scoreHero">
+      <div class="sh-label">Your Website Trust Score</div>
+      <div class="sh-number" id="shNumber">0%</div>
+      <div class="sh-total">Website Trust Score</div>
+      <div class="sh-tier" id="shTier"></div>
+      <p class="sh-message" id="shMessage"></p>
     </div>
 
-    <!-- Score Hero -->
-    <div class="score-hero">
-      <div class="score-number" id="scoreNumber">0</div>
-      <div class="score-total">out of 72</div>
-      <div class="tier-badge" id="tierBadge"></div>
-      <p class="tier-message" id="tierMessage"></p>
-    </div>
-
-    <!-- Radar Chart -->
-    <div class="radar-wrap">
+    <div class="radar-section">
       <h3>Your Trust Profile</h3>
       <div class="radar-container">
         <canvas id="radarChart"></canvas>
       </div>
-      <div class="bar-chart-fallback" id="barChartFallback"></div>
     </div>
 
-    <!-- Pillar Breakdown -->
-    <div class="pillar-cards" id="pillarCards"></div>
+    <div class="breakdown-cards" id="breakdownCards"></div>
 
-    <!-- Action Plan -->
     <div class="action-plan" id="actionPlan">
-      <h3>Your Priority Action Plan</h3>
+      <h3>Your Priority Fixes</h3>
     </div>
 
-    <!-- CTA Block -->
     <div class="cta-block">
-      <h3>Fix Your Weakest Trust Pillar Today</h3>
-      <p>Smash Balloon helps 1.75 million+ websites automatically display social proof, fresh content, and engaging visuals.</p>
-      <a href="https://smashballoon.com/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results" target="_blank" class="btn-primary">Explore Smash Balloon</a>
+      <h3>Fix your weakest pillar today</h3>
+      <p>Smash Balloon helps 1.75M+ websites automatically display social proof, fresh content, and engaging visuals.</p>
+      <a href="https://smashballoon.com/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results" target="_blank" class="btn-cta">
+        Explore Smash Balloon
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
     </div>
 
-    <!-- Share -->
-    <div class="share-row">
+    <div class="results-actions">
+      <button class="retake-btn" onclick="retakeQuiz()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 105.64-8.36L1 10"/></svg>
+        Retake Quiz
+      </button>
       <button class="share-btn" onclick="shareTwitter()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         Share on X
       </button>
       <button class="share-btn" onclick="shareLinkedIn()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
         Share on LinkedIn
       </button>
       <button class="share-btn" onclick="window.print()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Print Report
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
       </button>
     </div>
   </div>
@@ -1017,145 +1262,355 @@ body {
 
 <script>
 /* ═══════════════════════════════════════════
-   QUIZ DATA — 24 Questions, 6 Pillars
+   DATA — 18 Questions, 6 Pillars, 3 each
+   Descriptive answers (not Likert)
    ═══════════════════════════════════════════ */
 
 const PILLARS = [
-  { name: 'Social Proof', icon: '\u2B50', key: 'socialProof', subtitle: 'Do visitors see evidence that real people trust you?' },
-  { name: 'Content Freshness', icon: '\uD83D\uDD04', key: 'contentFreshness', subtitle: 'Does your website feel active, current, and alive?' },
-  { name: 'Video & Visual', icon: '\uD83C\uDFA5', key: 'videoVisual', subtitle: 'Are you using video to hold attention and build connection?' },
-  { name: 'Platform Continuity', icon: '\uD83D\uDD17', key: 'platformContinuity', subtitle: 'Does your website feel like a natural extension of your social presence?' },
-  { name: 'Clarity & Direction', icon: '\uD83C\uDFAF', key: 'clarityDirection', subtitle: 'Does your website make it obvious what to do next?' },
-  { name: 'Mobile & Speed', icon: '\u26A1', key: 'mobileSpeed', subtitle: 'Does your website perform where most of your visitors actually are?' }
-];
-
-const RATING_LABELS = [
-  'Not at all',
-  'Barely',
-  'Mostly',
-  'Nailed it'
-];
-
-const QUESTIONS = [
-  // ── Social Proof ──
-  { pillar: 0, text: 'My website shows real customer reviews from places like Google, Facebook, or Yelp.' },
-  { pillar: 0, text: 'Reviews are easy to spot on my most important pages — visitors don\'t have to go looking for them.' },
-  { pillar: 0, text: 'I show content from real customers — like tagged posts, photos, or community shoutouts.' },
-  { pillar: 0, text: 'Visitors can see signs of real engagement (likes, comments, follower counts) somewhere on my site.' },
-
-  // ── Content Freshness ──
-  { pillar: 1, text: 'My website reflects what I\'ve been posting on social media recently.' },
-  { pillar: 1, text: 'A visitor can tell that my business has been active lately.' },
-  { pillar: 1, text: 'I don\'t have to manually update my website every time I want it to feel current.' },
-  { pillar: 1, text: 'My latest videos, posts, or content are easy to find on my site.' },
-
-  // ── Video & Visual ──
-  { pillar: 2, text: 'My website features video content on important pages.' },
-  { pillar: 2, text: 'Visitors can watch my latest videos without leaving my site.' },
-  { pillar: 2, text: 'I use short-form video (Reels, Shorts, TikToks) to engage visitors on my site.' },
-  { pillar: 2, text: 'Video content on my site updates automatically when I post something new.' },
-
-  // ── Platform Continuity ──
-  { pillar: 3, text: 'My website looks and feels like it belongs to the same brand as my social media.' },
-  { pillar: 3, text: 'When someone clicks through from a social post, they find relevant content right away.' },
-  { pillar: 3, text: 'The tone and energy of my website matches how I come across on social.' },
-  { pillar: 3, text: 'My social content is actually visible on my website — not just linked from the footer.' },
-
-  // ── Clarity & Direction ──
-  { pillar: 4, text: 'My homepage makes it clear what I do and who I help within a few seconds.' },
-  { pillar: 4, text: 'Each important page has one main thing I want visitors to do next.' },
-  { pillar: 4, text: 'Someone coming from social media can easily figure out how to take the next step.' },
-  { pillar: 4, text: 'My offer, pricing, or next step is easy to find without digging around.' },
-
-  // ── Mobile & Speed ──
-  { pillar: 5, text: 'My website loads fast on mobile — no long waits.' },
-  { pillar: 5, text: 'Social feeds, videos, and reviews all look good on every screen size.' },
-  { pillar: 5, text: 'The mobile version of my site feels intentional, not like a squished desktop page.' },
-  { pillar: 5, text: 'Embedded content (feeds, videos, widgets) doesn\'t slow my site down.' }
-];
-
-const TIERS = [
-  { max: 20, name: 'The Ghost Site', color: '#fe544f', message: 'Your website isn\'t showing people why they should trust you yet. Visitors land, don\'t see any proof that others trust you, and leave. The good news? Small changes here make a big difference fast.' },
-  { max: 40, name: 'The Leaky Funnel', color: '#fcb900', message: 'You\'re getting attention — but losing people before they take action. The foundation is there. You just need to close the gaps that are quietly sending visitors away.' },
-  { max: 55, name: 'The Promising Foundation', color: '#f5a623', message: 'Your site has good bones but it\'s missing a few key trust signals. You\'re closer than you think — a few focused improvements could make a real difference.' },
-  { max: 72, name: 'The Trust Machine', color: '#34c759', message: 'Your website does the heavy lifting for you. It feels alive, trustworthy, and connected to your brand. Keep doing what you\'re doing and fine-tune as you grow.' }
-];
-
-const PRODUCT_RECS = [
   {
-    product: 'Reviews Feed Pro',
-    hook: 'Show your Google, Yelp, and Facebook reviews right on your site — they update automatically.',
-    url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You know reviews matter — that\'s already half the battle.',
-    quickWin: 'Put your best reviews from Google, Yelp, or Facebook on your most-visited pages. Let them update on their own.'
+    name: 'Social Proof', icon: 'ph-star', key: 'socialProof',
+    title: 'Do visitors see that real people trust you?',
+    subtitle: '3 questions about reviews, UGC, and visible engagement.'
   },
   {
-    product: 'Facebook Feed Pro + Twitter Feed',
-    hook: 'Your site stays fresh automatically every time you post on social.',
-    url: 'https://smashballoon.com/social-wall/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You\'re already creating content — it just isn\'t showing up on your site yet.',
-    quickWin: 'Add your Facebook or Twitter feed to your homepage so it updates itself whenever you post.'
+    name: 'Content Freshness', icon: 'ph-arrows-clockwise', key: 'contentFreshness',
+    title: 'Does your site feel alive and current?',
+    subtitle: '3 questions about how up-to-date your site appears.'
   },
   {
-    product: 'YouTube Feed Pro + Instagram Feed Pro',
-    hook: 'Put your videos and visual content right on your site so visitors don\'t have to leave.',
-    url: 'https://smashballoon.com/youtube-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You\'re already making video and visual content — great start.',
-    quickWin: 'Embed your YouTube or Instagram feed on your main pages so visitors see real content instead of stock photos.'
+    name: 'Video & Visual', icon: 'ph-video-camera', key: 'videoVisual',
+    title: 'Are you using video to build connection?',
+    subtitle: '3 questions about video content on your site.'
   },
   {
-    product: 'Social Wall (All Access Bundle)',
-    hook: 'Pull all your social platforms into one feed on your site — everything in one place.',
-    url: 'https://smashballoon.com/social-wall/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You\'re active on multiple social platforms — that\'s a huge advantage.',
-    quickWin: 'Set up a Social Wall that pulls all your platforms into one feed. Visitors see your full presence without having to leave your site.'
+    name: 'Platform Continuity', icon: 'ph-link', key: 'platformContinuity',
+    title: 'Does your site match your social presence?',
+    subtitle: '3 questions about brand consistency across platforms.'
   },
   {
-    product: 'Reviews Feed Pro + Instagram Feed Pro',
-    hook: 'Show reviews and real customer content near the top of your pages so visitors see proof right away.',
-    url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You\'ve got a clear message — it just needs some proof behind it.',
-    quickWin: 'Add a review section and Instagram feed near the top of your pages. Let real customers do the talking for you.'
+    name: 'Clarity & Direction', icon: 'ph-crosshair', key: 'clarityDirection',
+    title: 'Can visitors figure out what to do next?',
+    subtitle: '3 questions about navigation, direction, and messaging.'
   },
   {
-    product: 'All Smash Balloon Feeds',
-    hook: 'All Smash Balloon feeds are built to load fast and look great on every device.',
-    url: 'https://smashballoon.com/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results',
-    whatsWorking: 'You care about mobile — that puts you ahead of most sites already.',
-    quickWin: 'Check if anything embedded on your site is slowing it down. Smash Balloon feeds are designed to load fast and look right on every screen size.'
+    name: 'Mobile & Speed', icon: 'ph-lightning', key: 'mobileSpeed',
+    title: 'Does your site perform where visitors actually are?',
+    subtitle: '3 questions about mobile experience and loading speed.'
   }
 ];
 
-/* ═══════════════════════════════════════════
-   QUIZ STATE
-   ═══════════════════════════════════════════ */
-let currentQuestion = 0;
-let answers = new Array(24).fill(null);
-let pillarScores = new Array(6).fill(0);
-let startTime = null;
-let skippedLead = false;
+function iconHTML(iconClass, size) {
+  var weight = size ? 'ph-bold' : 'ph-fill';
+  return '<i class="' + weight + ' ' + iconClass + '"' + (size ? ' style="font-size:' + size + '"' : '') + '></i>';
+}
+
+const QUESTIONS = [
+  // Social Proof
+  {
+    pillar: 0,
+    text: 'How do you show customer reviews on your site?',
+    answers: [
+      { label: "No reviews anywhere", score: 0 },
+      { label: 'I have a few manually added testimonials', score: 1 },
+      { label: 'I pull reviews from one platform (Google, Yelp, etc.)', score: 2 },
+      { label: 'I show live reviews from multiple platforms on key pages', score: 3 }
+    ]
+  },
+  {
+    pillar: 0,
+    text: 'Do you display real customer content like photos, tagged posts, or shoutouts?',
+    answers: [
+      { label: 'No customer content at all', score: 0 },
+      { label: 'I occasionally screenshot and upload customer posts', score: 1 },
+      { label: 'I have a gallery or feed of customer content somewhere', score: 2 },
+      { label: 'Customer content is prominently featured and updates automatically', score: 3 }
+    ]
+  },
+  {
+    pillar: 0,
+    text: 'Can visitors see signs of real engagement \u2014 like follower counts, likes, or comment activity?',
+    answers: [
+      { label: 'No engagement signals visible', score: 0 },
+      { label: 'Maybe a social icon in the footer with no context', score: 1 },
+      { label: 'Some engagement metrics are visible but not prominent', score: 2 },
+      { label: 'Visitors see clear proof of real engagement', score: 3 }
+    ]
+  },
+
+  // Content Freshness
+  {
+    pillar: 1,
+    text: 'How current does your site look to a first-time visitor?',
+    answers: [
+      { label: "It still shows last year's content or an old blog post", score: 0 },
+      { label: 'Some sections are current but others feel dated', score: 1 },
+      { label: 'Most content is within the last month', score: 2 },
+      { label: 'It clearly reflects what I posted this week', score: 3 }
+    ]
+  },
+  {
+    pillar: 1,
+    text: 'How do you keep your site updated?',
+    answers: [
+      { label: 'I have to manually update everything', score: 0 },
+      { label: 'I update manually but try to do it regularly', score: 1 },
+      { label: 'Some content auto-updates (like a blog feed)', score: 2 },
+      { label: 'My social feeds, reviews, and content sync automatically', score: 3 }
+    ]
+  },
+  {
+    pillar: 1,
+    text: 'Can visitors easily find your most recent posts, videos, or updates?',
+    answers: [
+      { label: "There's no clear path to recent content", score: 0 },
+      { label: 'They would need to dig through a blog or about page', score: 1 },
+      { label: "There's a section for recent content but it's not prominent", score: 2 },
+      { label: 'Latest content is visible on the homepage or key landing pages', score: 3 }
+    ]
+  },
+
+  // Video & Visual
+  {
+    pillar: 2,
+    text: 'How is video used on your site?',
+    answers: [
+      { label: 'No video at all', score: 0 },
+      { label: 'I link out to YouTube or social for videos', score: 1 },
+      { label: 'I embed a few videos but they need manual updating', score: 2 },
+      { label: 'Video is integrated and auto-updates', score: 3 }
+    ]
+  },
+  {
+    pillar: 2,
+    text: 'Do you use short-form video (Reels, Shorts, TikToks) on your site?',
+    answers: [
+      { label: 'Not at all \u2014 it lives only on social', score: 0 },
+      { label: "I've thought about it but haven't done it", score: 1 },
+      { label: 'I manually embed a few short videos', score: 2 },
+      { label: 'Visible on the site and stays current', score: 3 }
+    ]
+  },
+  {
+    pillar: 2,
+    text: 'Would a visitor describe your site as visual and engaging, or mostly text?',
+    answers: [
+      { label: 'Mostly text with a few stock images', score: 0 },
+      { label: 'Some real visuals but nothing dynamic', score: 1 },
+      { label: 'Good mix of visuals, some video, mostly static', score: 2 },
+      { label: 'Rich, dynamic visuals \u2014 feeds, video, real photography', score: 3 }
+    ]
+  },
+
+  // Platform Continuity
+  {
+    pillar: 3,
+    text: "If someone finds you on Instagram and then visits your site, would they recognize it's the same brand?",
+    answers: [
+      { label: 'Probably not \u2014 very different feel', score: 0 },
+      { label: 'The logo matches but the vibe is different', score: 1 },
+      { label: 'It mostly feels consistent', score: 2 },
+      { label: 'Seamless \u2014 same energy, content, and visual style', score: 3 }
+    ]
+  },
+  {
+    pillar: 3,
+    text: 'Is your social content visible on your website \u2014 or just linked from the footer?',
+    answers: [
+      { label: "Not visible at all", score: 0 },
+      { label: 'Just social icons in the footer/header', score: 1 },
+      { label: "There's a feed somewhere but it's not prominent", score: 2 },
+      { label: 'Social content is integrated into key pages and stays current', score: 3 }
+    ]
+  },
+  {
+    pillar: 3,
+    text: 'When someone clicks through from a social post, do they land somewhere relevant?',
+    answers: [
+      { label: 'They go to a generic homepage', score: 0 },
+      { label: 'Usually the homepage, sometimes a specific page', score: 1 },
+      { label: 'I try to link to relevant pages', score: 2 },
+      { label: 'They land exactly where the post left off', score: 3 }
+    ]
+  },
+
+  // Clarity & Direction
+  {
+    pillar: 4,
+    text: 'How quickly can a new visitor understand what you do and who you help?',
+    answers: [
+      { label: "They'd probably need to scroll and read a lot", score: 0 },
+      { label: 'The headline gives some idea but it could be clearer', score: 1 },
+      { label: "It's fairly clear within a few seconds", score: 2 },
+      { label: 'Crystal clear immediately \u2014 headline, subhead, visual all aligned', score: 3 }
+    ]
+  },
+  {
+    pillar: 4,
+    text: 'Is there one clear next step on your most important pages?',
+    answers: [
+      { label: 'Most pages have no clear next step', score: 0 },
+      { label: 'There are buttons but they compete with each other', score: 1 },
+      { label: 'Main pages have one primary action', score: 2 },
+      { label: 'Every key page has one dominant, obvious next step', score: 3 }
+    ]
+  },
+  {
+    pillar: 4,
+    text: 'Can a visitor from social media easily figure out how to buy, book, or sign up?',
+    answers: [
+      { label: "They'd need to hunt for the right page", score: 0 },
+      { label: "It's there but takes a few clicks to find", score: 1 },
+      { label: 'Fairly easy \u2014 within one click from the homepage', score: 2 },
+      { label: 'Dead simple \u2014 they can take action from almost any page', score: 3 }
+    ]
+  },
+
+  // Mobile & Speed
+  {
+    pillar: 5,
+    text: 'How does your site perform on mobile?',
+    answers: [
+      { label: "Honestly, I haven't checked in a while", score: 0 },
+      { label: "It works but it's clearly a squished desktop version", score: 1 },
+      { label: 'Looks decent with some rough spots', score: 2 },
+      { label: 'Mobile experience is intentional, fast, and feels native', score: 3 }
+    ]
+  },
+  {
+    pillar: 5,
+    text: 'Do embedded feeds, videos, or widgets affect your loading speed?',
+    answers: [
+      { label: "I don't have any embedded content", score: 0 },
+      { label: 'Yes \u2014 the site feels noticeably slower with them', score: 1 },
+      { label: "Some impact but it's manageable", score: 2 },
+      { label: 'No \u2014 everything loads fast and smooth', score: 3 }
+    ]
+  },
+  {
+    pillar: 5,
+    text: 'Do your social feeds and reviews look good on every screen size?',
+    answers: [
+      { label: "I don't display any", score: 0 },
+      { label: 'They break or look awkward on mobile', score: 1 },
+      { label: 'They work but could be better', score: 2 },
+      { label: 'They look great on desktop, tablet, and phone', score: 3 }
+    ]
+  }
+];
+
+const MAX_SCORE = QUESTIONS.length * 3;
+function toPercent(raw, max) { return Math.round((raw / max) * 100); }
+
+const TIERS = [
+  { max: 25, name: 'The Ghost Site', color: '#fe544f', message: "Your website isn't earning trust yet. Visitors land, see no proof that others trust you, and leave. Small changes here make a big difference fast." },
+  { max: 50, name: 'The Leaky Funnel', color: '#f5a623', message: "You're getting attention but losing people before they act. The foundation is there \u2014 you just need to close the gaps that are quietly sending visitors away." },
+  { max: 75, name: 'Promising Foundation', color: '#fcb900', message: "Your site has good bones but is missing a few key trust signals. A few focused improvements could make a real difference." },
+  { max: 100, name: 'The Trust Machine', color: '#2db87a', message: "Your website does the heavy lifting. It feels alive, trustworthy, and connected to your brand. Keep fine-tuning as you grow." }
+];
+
+const PILLAR_INSIGHTS = {
+  low: [
+    "Visitors have no reason to believe other people trust you. Adding reviews or real customer content is the single highest-ROI change you can make.",
+    "Your site looks abandoned. First-time visitors will assume you're inactive or out of business.",
+    "You're missing video entirely. In a feed-first world, this is a big gap in engagement and trust.",
+    "There's a disconnect between your social presence and your website. Visitors from social feel like they landed on the wrong site.",
+    "Visitors can't figure out what you do or what to do next. You're losing them before they even consider trusting you.",
+    "Your mobile experience is hurting you. Most visitors are on phones and they're bouncing."
+  ],
+  mid: [
+    "You have some social proof but it's not doing enough work. Make it more visible and pull from more sources.",
+    "Some sections feel current but the site as a whole doesn't scream 'active.' Automate what you can.",
+    "Some video is present but it's not integrated well. Make it more prominent and keep it updated.",
+    "Your brand is somewhat consistent but the experience from social to site still has friction.",
+    "Your message is mostly clear but the path to action could be more obvious.",
+    "Mobile works but doesn't feel intentional. Speed and responsive design need attention."
+  ],
+  high: [
+    "Strong social proof. Your reviews and customer content are visible and persuasive.",
+    "Your site feels alive and current. Visitors can tell you're active.",
+    "Video is pulling its weight. Your site feels dynamic and engaging.",
+    "Seamless transition from social to site. Visitors feel like they're in the right place.",
+    "Clear messaging and obvious CTAs. Visitors know exactly what to do.",
+    "Fast, responsive, and intentional on every device."
+  ]
+};
+
+const PRODUCT_RECS = [
+  { product: 'Reviews Feed Pro', url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Auto-display Google, Yelp, and Facebook reviews on your site.', whatsWorking: "You know reviews matter \u2014 that's already half the battle.", quickWin: 'Put your best reviews from Google, Yelp, or Facebook on your most-visited pages.' },
+  { product: 'Custom Facebook Feed', url: 'https://smashballoon.com/custom-facebook-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Keep your site fresh automatically by syncing your Facebook posts.', whatsWorking: "You're already creating content \u2014 it just isn't showing up on your site.", quickWin: 'Add your social feeds to your homepage so it updates whenever you post.' },
+  { product: 'YouTube Feed Pro', url: 'https://smashballoon.com/youtube-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Embed your latest YouTube and short-form videos with auto-updates.', whatsWorking: "You're making video content \u2014 great start.", quickWin: 'Embed your YouTube or Instagram feed so visitors see real content, not stock photos.' },
+  { product: 'Social Wall', url: 'https://smashballoon.com/social-wall/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Unify all your social platforms into one live feed on your site.', whatsWorking: "You're active on multiple platforms \u2014 that's a huge advantage.", quickWin: 'A Social Wall pulls everything into one feed. One install, full presence.' },
+  { product: 'Reviews Feed Pro', url: 'https://smashballoon.com/reviews-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Add reviews and customer proof near your CTAs for instant credibility.', whatsWorking: "You've got a clear message \u2014 it just needs proof behind it.", quickWin: 'Add reviews near the top of pages. Let customers do the talking.' },
+  { product: 'Instagram Feed Pro', url: 'https://smashballoon.com/instagram-feed/?utm_source=trust-score&utm_medium=quiz&utm_campaign=results', hook: 'Beautiful, fast-loading Instagram feeds that look great on every device.', whatsWorking: 'You care about mobile \u2014 that puts you ahead of most.', quickWin: 'Check if embeds are slowing you down. Smash Balloon feeds are designed for speed.' }
+];
 
 /* ═══════════════════════════════════════════
-   SCREEN TRANSITIONS
+   STATE
+   ═══════════════════════════════════════════ */
+let currentQuestion = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let pillarScores = new Array(6).fill(0);
+
+/* ═══════════════════════════════════════════
+   SCREEN MANAGEMENT
    ═══════════════════════════════════════════ */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(id);
-  target.classList.remove('active');
-  // Force reflow for animation restart
-  void target.offsetWidth;
-  target.classList.add('active');
+  const el = document.getElementById(id);
+  void el.offsetWidth;
+  el.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
+function updateProgress() {
+  const pct = ((currentQuestion) / QUESTIONS.length) * 100;
+  document.getElementById('quizProgressFill').style.width = pct + '%';
+}
+
 /* ═══════════════════════════════════════════
-   WELCOME → QUIZ
+   START
    ═══════════════════════════════════════════ */
+function skipToResults() {
+  // Sample data: a "Leaky Funnel" profile with varied pillar scores
+  pillarScores = [5, 3, 2, 6, 4, 7]; // Social, Freshness, Video, Continuity, Clarity, Mobile
+  showResults(true);
+}
+
 function startQuiz() {
-  startTime = Date.now();
-  document.getElementById('progressBar').style.display = 'block';
-  showScreen('screenQuiz');
-  renderQuestion();
+  document.getElementById('quizHeader').classList.add('visible');
+  showPillarIntro(0);
+}
+
+function restartQuiz() {
+  currentQuestion = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  pillarScores = new Array(6).fill(0);
+  document.getElementById('quizHeader').classList.remove('visible');
+  updateProgress();
+  showScreen('screenWelcome');
+}
+
+/* ═══════════════════════════════════════════
+   PILLAR INTRO
+   ═══════════════════════════════════════════ */
+function showPillarIntro(pillarIdx) {
+  const p = PILLARS[pillarIdx];
+  document.getElementById('piIcon').innerHTML = iconHTML(p.icon);
+  // Re-trigger pop-in animation
+  const iconEl = document.getElementById('piIcon');
+  iconEl.style.animation = 'none';
+  void iconEl.offsetWidth;
+  iconEl.style.animation = '';
+
+  document.getElementById('piCounter').textContent = 'Pillar ' + (pillarIdx + 1) + ' of 6';
+  document.getElementById('piTitle').textContent = p.title;
+  document.getElementById('piSubtitle').textContent = p.subtitle;
+  document.getElementById('piBegin').onclick = function() {
+    showScreen('screenQuiz');
+    renderQuestion();
+  };
+  updateProgress();
+  showScreen('screenPillarIntro');
 }
 
 /* ═══════════════════════════════════════════
@@ -1164,39 +1619,59 @@ function startQuiz() {
 function renderQuestion() {
   const q = QUESTIONS[currentQuestion];
   const pillar = PILLARS[q.pillar];
+  const qInPillar = currentQuestion - (q.pillar * 3);
 
-  document.getElementById('pillarIcon').textContent = pillar.icon;
-  document.getElementById('pillarName').textContent = pillar.name;
-  document.getElementById('questionCounter').textContent = `Question ${currentQuestion + 1} of 24`;
-  document.getElementById('questionText').textContent = pillar.subtitle;
+  // Build section dots
+  let dotsHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const gIdx = q.pillar * 3 + i;
+    let cls = 'section-dot';
+    if (gIdx < currentQuestion) cls += ' filled';
+    else if (gIdx === currentQuestion) cls += ' current';
+    dotsHTML += '<div class="' + cls + '"></div>';
+  }
 
-  // Progress bar
-  document.getElementById('progressBar').style.width = ((currentQuestion / 24) * 100) + '%';
+  const container = document.getElementById('quizInner');
 
-  // Back button visibility
-  document.getElementById('backBtn').style.visibility = currentQuestion > 0 ? 'visible' : 'hidden';
+  container.innerHTML =
+    '<div class="quiz-top">' +
+      '<div class="quiz-pillar-tag">' + iconHTML(pillar.icon) + ' ' + pillar.name + '</div>' +
+      '<div class="quiz-counter">' + (currentQuestion + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    '<div class="question-card">' +
+      '<div class="question-text">' + q.text + '</div>' +
+      '<div class="answer-options">' +
+        q.answers.map(function(a, i) {
+          return '<div class="answer-option' + (answers[currentQuestion] === i ? ' selected' : '') + '"' +
+            ' onclick="selectAnswer(' + i + ')" role="button" tabindex="0" aria-label="' + a.label.replace(/"/g, '&quot;') + '">' +
+            '<div class="answer-dot"></div>' +
+            '<span class="answer-label">' + a.label + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="quiz-nav">' +
+      '<button class="btn-back" onclick="goBack()"' + (currentQuestion === 0 ? ' style="visibility:hidden"' : '') + '>' +
+        '<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M13 16l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        'Back' +
+      '</button>' +
+      '<div class="section-dots">' + dotsHTML + '</div>' +
+    '</div>';
 
-  // Statement card with rating scale
-  const container = document.getElementById('answersContainer');
-  container.innerHTML = `
-    <div class="statement-card">
-      <div class="statement-text">${q.text}</div>
-      <div class="rating-scale">
-        ${RATING_LABELS.map((label, i) => `
-          <div class="rating-option${answers[currentQuestion] === i ? ' selected' : ''}" onclick="selectAnswer(${i})" role="button" tabindex="0" aria-label="${label}">
-            <span class="rating-label">${label}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+  // Re-trigger card animation
+  var card = container.querySelector('.question-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
 
-  // Keyboard support
-  container.querySelectorAll('.rating-option').forEach((opt, i) => {
-    opt.addEventListener('keydown', e => {
+  // Keyboard on options
+  container.querySelectorAll('.answer-option').forEach(function(opt, i) {
+    opt.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectAnswer(i); }
     });
   });
+
+  updateProgress();
 }
 
 /* ═══════════════════════════════════════════
@@ -1205,30 +1680,26 @@ function renderQuestion() {
 function selectAnswer(index) {
   answers[currentQuestion] = index;
 
-  // Visual feedback
-  const options = document.querySelectorAll('.rating-option');
-  options.forEach((c, i) => {
+  var options = document.querySelectorAll('.answer-option');
+  options.forEach(function(c, i) {
     c.classList.toggle('selected', i === index);
     c.classList.add('locked');
   });
 
-  // Auto-advance after 400ms
-  setTimeout(() => {
-    const q = QUESTIONS[currentQuestion];
-    const currentPillar = q.pillar;
+  setTimeout(function() {
+    var currentPillar = QUESTIONS[currentQuestion].pillar;
     currentQuestion++;
 
     if (currentQuestion >= QUESTIONS.length) {
-      // Quiz complete
       calculateScores();
-      showLeadCapture();
+      showPillarResult(currentPillar, true);
     } else if (QUESTIONS[currentQuestion].pillar !== currentPillar) {
-      // Pillar transition — show interstitial
-      showPillarInterstitial(currentPillar);
+      calculateScores();
+      showPillarResult(currentPillar, false);
     } else {
       renderQuestion();
     }
-  }, 400);
+  }, 350);
 }
 
 /* ═══════════════════════════════════════════
@@ -1242,50 +1713,58 @@ function goBack() {
 }
 
 /* ═══════════════════════════════════════════
-   PILLAR INTERSTITIAL
+   PILLAR RESULT
    ═══════════════════════════════════════════ */
-function showPillarInterstitial(pillarIndex) {
-  const pillar = PILLARS[pillarIndex];
-  // Calculate pillar score
-  let score = 0;
-  for (let i = pillarIndex * 4; i < pillarIndex * 4 + 4; i++) {
-    if (answers[i] !== null) {
-      score += answers[i]; // score = rating index (0-3)
-    }
+function showPillarResult(pillarIdx, isLast) {
+  var p = PILLARS[pillarIdx];
+  var score = pillarScores[pillarIdx];
+  var maxScore = 9;
+  var pct = score / maxScore;
+  var circumference = 2 * Math.PI * 45; // r=45
+
+  var color = pct >= 0.75 ? '#2db87a' : pct >= 0.45 ? '#fcb900' : '#fe544f';
+
+  // Ring
+  var fill = document.getElementById('prRingFill');
+  fill.style.stroke = color;
+  fill.style.strokeDasharray = circumference;
+  fill.style.strokeDashoffset = circumference;
+  setTimeout(function() {
+    fill.style.strokeDashoffset = circumference * (1 - pct);
+  }, 100);
+
+  var pillarPct = toPercent(score, maxScore);
+  document.getElementById('prScoreNum').textContent = pillarPct + '%';
+  document.getElementById('prRingLabel').textContent = '';
+  document.getElementById('prTitle').innerHTML = iconHTML(p.icon) + ' ' + p.name;
+
+  // Insight
+  var tier = pct >= 0.75 ? 'high' : pct >= 0.45 ? 'mid' : 'low';
+  document.getElementById('prInsight').textContent = PILLAR_INSIGHTS[tier][pillarIdx];
+
+  // Continue button
+  var continueBtn = document.getElementById('prContinue');
+  if (isLast) {
+    continueBtn.innerHTML = 'See my full report <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    continueBtn.onclick = function() { showLeadCapture(); };
+  } else {
+    var nextP = PILLARS[pillarIdx + 1];
+    continueBtn.innerHTML = 'Next: ' + iconHTML(nextP.icon) + ' ' + nextP.name + ' <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    continueBtn.onclick = function() { showPillarIntro(pillarIdx + 1); };
   }
-  pillarScores[pillarIndex] = score;
 
-  document.getElementById('interstitialPillar').textContent = `${pillar.icon} ${pillar.name} Complete`;
-  document.getElementById('interstitialScore').textContent = score;
-
-  // Re-trigger check animation
-  const circle = document.getElementById('checkCircle');
-  circle.style.animation = 'none';
-  void circle.offsetWidth;
-  circle.style.animation = '';
-
-  const svg = circle.querySelector('svg polyline');
-  svg.style.animation = 'none';
-  void svg.offsetWidth;
-  svg.style.animation = '';
-
-  showScreen('screenInterstitial');
-
-  document.getElementById('interstitialNext').onclick = () => {
-    showScreen('screenQuiz');
-    renderQuestion();
-  };
+  updateProgress();
+  showScreen('screenPillarResult');
 }
 
 /* ═══════════════════════════════════════════
-   CALCULATE SCORES
+   CALCULATE
    ═══════════════════════════════════════════ */
 function calculateScores() {
   pillarScores = new Array(6).fill(0);
-  for (let i = 0; i < QUESTIONS.length; i++) {
+  for (var i = 0; i < QUESTIONS.length; i++) {
     if (answers[i] !== null) {
-      const pillarIdx = QUESTIONS[i].pillar;
-      pillarScores[pillarIdx] += answers[i]; // score = rating index (0-3)
+      pillarScores[QUESTIONS[i].pillar] += QUESTIONS[i].answers[answers[i]].score;
     }
   }
 }
@@ -1294,27 +1773,24 @@ function calculateScores() {
    LEAD CAPTURE
    ═══════════════════════════════════════════ */
 function showLeadCapture() {
-  const total = pillarScores.reduce((a, b) => a + b, 0);
-  const tier = TIERS.find(t => total <= t.max);
+  var total = pillarScores.reduce(function(a, b) { return a + b; }, 0);
+  var totalPct = toPercent(total, MAX_SCORE);
+  var tier = TIERS.find(function(t) { return totalPct <= t.max; });
 
-  document.getElementById('blurredScore').textContent = total;
-  document.getElementById('blurredScore').style.color = tier.color;
-  document.getElementById('blurredTier').textContent = tier.name;
-  document.getElementById('blurredTier').style.color = tier.color;
+  document.getElementById('bpScore').textContent = totalPct + '%';
+  document.getElementById('bpScore').style.color = tier.color;
+  document.getElementById('bpTier').textContent = tier.name;
+  document.getElementById('bpTier').style.color = tier.color;
 
-  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('quizProgressFill').style.width = '100%';
   showScreen('screenLead');
 }
 
-function submitLead(e) {
-  e.preventDefault();
+function submitLead() {
+  var name = document.getElementById('leadName').value.trim();
+  var email = document.getElementById('leadEmail').value.trim();
+  var valid = true;
 
-  const name = document.getElementById('leadName').value.trim();
-  const email = document.getElementById('leadEmail').value.trim();
-  const website = document.getElementById('leadWebsite').value.trim();
-
-  // Validation
-  let valid = true;
   if (!name) {
     document.getElementById('nameError').classList.add('visible');
     document.getElementById('leadName').classList.add('error');
@@ -1333,151 +1809,94 @@ function submitLead(e) {
     document.getElementById('leadEmail').classList.remove('error');
   }
 
-  if (!valid) return false;
+  if (!valid) return;
 
-  const total = pillarScores.reduce((a, b) => a + b, 0);
-  const tier = TIERS.find(t => total <= t.max);
-  const lowestPillar = PILLARS[pillarScores.indexOf(Math.min(...pillarScores))].name;
-  const completionTime = Math.round((Date.now() - startTime) / 1000);
+  var total = pillarScores.reduce(function(a, b) { return a + b; }, 0);
+  var totalPct = toPercent(total, MAX_SCORE);
+  var tier = TIERS.find(function(t) { return totalPct <= t.max; });
+  var lowestPillar = PILLARS[pillarScores.indexOf(Math.min.apply(null, pillarScores))].name;
 
-  const payload = {
+  var payload = {
     firstName: name,
     email: email,
-    website: website,
-    totalScore: total,
+    website: document.getElementById('leadWebsite').value,
+    score: totalPct,
     tier: tier.name,
-    pillarScores: Object.fromEntries(PILLARS.map((p, i) => [p.key, pillarScores[i]])),
     lowestPillar: lowestPillar,
-    completionTimeSeconds: completionTime,
-    skipped: false,
+    pillarScores: PILLARS.reduce(function(obj, p, i) { obj[p.key] = toPercent(pillarScores[i], 9); return obj; }, {}),
     timestamp: new Date().toISOString()
   };
 
-  // Send to webhook (configure URL below)
-  sendLeadData(payload);
-  showResults(false);
-  return false;
-}
-
-function sendLeadData(payload) {
   // ── CONFIGURE YOUR WEBHOOK URL HERE ──
-  const WEBHOOK_URL = ''; // e.g. 'https://formspree.io/f/xxxxxxxx'
-
-  if (!WEBHOOK_URL) {
-    console.log('Lead data (no webhook configured):', payload);
+  var WEBHOOK_URL = '';
+  if (WEBHOOK_URL) {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(function() {
+      localStorage.setItem('trustScoreLeadRetry', JSON.stringify(payload));
+    });
+  } else {
+    console.log('Lead captured (no webhook configured):', payload);
     localStorage.setItem('trustScoreLead', JSON.stringify(payload));
-    return;
   }
 
-  fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(() => {
-    // Fallback: save to localStorage for retry
-    localStorage.setItem('trustScoreLeadRetry', JSON.stringify(payload));
-    console.warn('Lead capture failed — saved to localStorage for retry');
-  });
+  showResults(false);
 }
-
-// Retry failed lead submissions on page load
-(function retryLead() {
-  const retry = localStorage.getItem('trustScoreLeadRetry');
-  if (retry) {
-    const WEBHOOK_URL = '';
-    if (WEBHOOK_URL) {
-      fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: retry
-      }).then(() => localStorage.removeItem('trustScoreLeadRetry'))
-        .catch(() => {});
-    }
-  }
-})();
 
 /* ═══════════════════════════════════════════
    RESULTS
    ═══════════════════════════════════════════ */
-function showResults(wasSkipped) {
-  skippedLead = wasSkipped;
-
-  if (wasSkipped) {
-    const total = pillarScores.reduce((a, b) => a + b, 0);
-    const tier = TIERS.find(t => total <= t.max);
-    const lowestPillar = PILLARS[pillarScores.indexOf(Math.min(...pillarScores))].name;
-    const payload = {
-      skipped: true,
-      totalScore: total,
-      tier: tier.name,
-      lowestPillar: lowestPillar,
-      timestamp: new Date().toISOString()
-    };
-    console.log('Quiz completed (skipped lead capture):', payload);
-  }
-
-  document.getElementById('progressBar').style.display = 'none';
+function showResults(skipped) {
+  document.getElementById('quizHeader').classList.remove('visible');
   showScreen('screenResults');
   renderResults();
 }
 
 function renderResults() {
-  const total = pillarScores.reduce((a, b) => a + b, 0);
-  const tier = TIERS.find(t => total <= t.max);
+  var total = pillarScores.reduce(function(a, b) { return a + b; }, 0);
+  var totalPct = toPercent(total, MAX_SCORE);
+  var tier = TIERS.find(function(t) { return totalPct <= t.max; });
 
-  // Animated score counter
-  const scoreEl = document.getElementById('scoreNumber');
-  scoreEl.style.color = tier.color;
-  animateCounter(scoreEl, 0, total, 1500);
+  // Animated counter (percentage)
+  var numEl = document.getElementById('shNumber');
+  animateCounter(numEl, 0, totalPct, 1200, '%');
 
   // Tier badge
-  const badge = document.getElementById('tierBadge');
-  badge.textContent = tier.name;
-  badge.style.background = tier.color;
+  var tierEl = document.getElementById('shTier');
+  tierEl.textContent = tier.name;
+  tierEl.style.background = tier.color;
+  document.getElementById('shMessage').textContent = tier.message;
 
-  // Tier message
-  document.getElementById('tierMessage').textContent = tier.message;
-
-  // Radar chart
-  renderRadarChart();
-
-  // Bar chart fallback
-  renderBarChart();
-
-  // Pillar breakdown cards
-  renderPillarCards();
-
-  // Action plan
+  renderRadar();
+  renderBreakdownCards();
   renderActionPlan();
 }
 
-function animateCounter(el, start, end, duration) {
-  const startTs = performance.now();
-  function step(ts) {
-    const progress = Math.min((ts - startTs) / duration, 1);
-    // Ease out cubic
-    const eased = 1 - Math.pow(1 - progress, 3);
-    el.textContent = Math.round(start + (end - start) * eased);
-    if (progress < 1) requestAnimationFrame(step);
+function animateCounter(el, from, to, dur, suffix) {
+  suffix = suffix || '';
+  var start = performance.now();
+  function tick(now) {
+    var t = Math.min((now - start) / dur, 1);
+    var eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (to - from) * eased) + suffix;
+    if (t < 1) requestAnimationFrame(tick);
   }
-  requestAnimationFrame(step);
+  requestAnimationFrame(tick);
 }
 
-function renderRadarChart() {
-  const ctx = document.getElementById('radarChart').getContext('2d');
-  const labels = PILLARS.map(p => p.name);
-  const data = pillarScores.map(s => s);
-
+function renderRadar() {
+  var ctx = document.getElementById('radarChart').getContext('2d');
   new Chart(ctx, {
     type: 'radar',
     data: {
-      labels: labels,
+      labels: PILLARS.map(function(p) { return p.name; }),
       datasets: [{
-        label: 'Your Score',
-        data: data,
-        backgroundColor: 'rgba(0, 32, 111, 0.15)',
+        data: pillarScores,
+        backgroundColor: 'rgba(0, 32, 111, 0.1)',
         borderColor: '#00206f',
-        borderWidth: 2.5,
+        borderWidth: 2,
         pointBackgroundColor: '#00206f',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
@@ -1487,160 +1906,140 @@ function renderRadarChart() {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      animation: { duration: 1200, easing: 'easeOutQuart' },
+      animation: { duration: 1000, easing: 'easeOutQuart' },
       scales: {
         r: {
           beginAtZero: true,
-          max: 12,
-          ticks: {
-            stepSize: 3,
-            font: { family: "'General Sans', sans-serif", size: 11 },
-            backdropColor: 'transparent',
-            color: '#9ca3af'
-          },
-          grid: { color: 'rgba(0,0,0,0.06)' },
-          angleLines: { color: 'rgba(0,0,0,0.06)' },
-          pointLabels: {
-            font: { family: "'General Sans', sans-serif", size: 12, weight: '600' },
-            color: '#1a1a1a'
-          }
+          max: 9,
+          ticks: { stepSize: 3, font: { family: "'General Sans', sans-serif", size: 10 }, backdropColor: 'transparent', color: '#a09890' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          angleLines: { color: 'rgba(0,0,0,0.05)' },
+          pointLabels: { font: { family: "'General Sans', sans-serif", size: 11, weight: '600' }, color: '#1a1a1a' }
         }
       },
-      plugins: {
-        legend: { display: false }
-      }
+      plugins: { legend: { display: false } }
     }
   });
 }
 
-function renderBarChart() {
-  const container = document.getElementById('barChartFallback');
-  container.innerHTML = PILLARS.map((p, i) => {
-    const pct = (pillarScores[i] / 12) * 100;
-    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
-    return `
-      <div class="bar-item">
-        <div class="bar-label"><span>${p.icon} ${p.name}</span><span>${pillarScores[i]}/12</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
-      </div>
-    `;
+function renderBreakdownCards() {
+  var container = document.getElementById('breakdownCards');
+  container.innerHTML = PILLARS.map(function(p, i) {
+    var score = pillarScores[i];
+    var pct = toPercent(score, 9);
+    var color = pct >= 75 ? '#2db87a' : pct >= 45 ? '#fcb900' : '#fe544f';
+    var rec = PRODUCT_RECS[i];
+    var showRec = pct < 75;
+
+    return '<div class="bd-card" data-observe>' +
+      '<div class="bd-header">' +
+        '<div class="bd-title">' + iconHTML(p.icon) + ' ' + p.name + '</div>' +
+        '<div class="bd-score-tag" style="background:' + color + '">' + pct + '%</div>' +
+      '</div>' +
+      '<div class="bd-bar"><div class="bd-bar-fill" style="background:' + color + '" data-width="' + pct + '%"></div></div>' +
+      '<div class="bd-feedback">' +
+        '<div class="bd-fb-item good">' +
+          '<span class="bd-fb-label">What\'s Working</span>' +
+          rec.whatsWorking +
+        '</div>' +
+        '<div class="bd-fb-item fix">' +
+          '<span class="bd-fb-label">Quick Win</span>' +
+          rec.quickWin +
+        '</div>' +
+      '</div>' +
+      (showRec ? '<div class="bd-rec">' +
+        '<div class="bd-rec-icon">\u2192</div>' +
+        '<div class="bd-rec-text"><a href="' + rec.url + '" target="_blank">' + rec.product + '</a> \u2014 ' + rec.hook + '</div>' +
+      '</div>' : '') +
+    '</div>';
   }).join('');
 
-  // Animate bars
-  setTimeout(() => {
-    container.querySelectorAll('.bar-fill').forEach(bar => {
-      bar.style.width = bar.style.width; // force paint
-    });
-  }, 100);
-}
-
-function renderPillarCards() {
-  const container = document.getElementById('pillarCards');
-  container.innerHTML = PILLARS.map((pillar, i) => {
-    const score = pillarScores[i];
-    const pct = (score / 12) * 100;
-    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
-    const rec = PRODUCT_RECS[i];
-    const showRec = score < 9;
-
-    return `
-      <div class="pillar-card" data-observe>
-        <div class="pillar-card-header">
-          <div class="pillar-card-title">${pillar.icon} ${pillar.name}</div>
-          <div class="pillar-card-score">${score}/12</div>
-        </div>
-        <div class="pillar-progress"><div class="pillar-progress-fill" style="background:${color};width:0%;" data-width="${pct}%"></div></div>
-        <div class="pillar-feedback">
-          <strong style="color:var(--green)">What's Working</strong>
-          <p>${rec.whatsWorking}</p>
-        </div>
-        <div class="pillar-feedback">
-          <strong style="color:var(--red)">Quick Win</strong>
-          <p>${rec.quickWin}</p>
-        </div>
-        ${showRec ? `
-        <div class="product-rec">
-          <div class="product-rec-title">Recommended Tool</div>
-          <p><a href="${rec.url}" target="_blank">${rec.product}</a> — ${rec.hook}</p>
-        </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-
-  // Staggered reveal with IntersectionObserver
-  const cards = container.querySelectorAll('[data-observe]');
+  // Staggered reveal
+  var cards = container.querySelectorAll('[data-observe]');
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, i) => {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
         if (entry.isIntersecting) {
-          setTimeout(() => {
+          setTimeout(function() {
             entry.target.classList.add('visible');
-            // Animate progress bar fill
-            const fill = entry.target.querySelector('.pillar-progress-fill');
+            var fill = entry.target.querySelector('.bd-bar-fill');
             if (fill) fill.style.width = fill.dataset.width;
-          }, i * 100);
-          observer.unobserve(entry.target);
+          }, 100);
+          obs.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.15 });
-    cards.forEach(c => observer.observe(c));
+    }, { threshold: 0.1 });
+    cards.forEach(function(c) { obs.observe(c); });
   } else {
-    cards.forEach(c => {
+    cards.forEach(function(c) {
       c.classList.add('visible');
-      const fill = c.querySelector('.pillar-progress-fill');
-      if (fill) fill.style.width = fill.dataset.width;
+      var f = c.querySelector('.bd-bar-fill');
+      if (f) f.style.width = f.dataset.width;
     });
   }
 }
 
 function renderActionPlan() {
-  const container = document.getElementById('actionPlan');
-
-  // Sort pillars by score (lowest first), take top 3
-  const ranked = PILLARS.map((p, i) => ({ ...p, score: pillarScores[i], index: i }))
-    .sort((a, b) => a.score - b.score)
+  var ranked = PILLARS.map(function(p, i) { return { name: p.name, icon: p.icon, score: pillarScores[i], index: i }; })
+    .sort(function(a, b) { return a.score - b.score; })
     .slice(0, 3);
 
-  const stepsHTML = ranked.map((p, i) => {
-    const rec = PRODUCT_RECS[p.index];
-    return `
-      <div class="action-step">
-        <div class="action-number">${i + 1}</div>
-        <div class="action-content">
-          <h4>${p.icon} ${p.name} (${p.score}/12)</h4>
-          <p>${rec.quickWin} <a href="${rec.url}" target="_blank" style="color:var(--red);font-weight:600;text-decoration:none;">Try ${rec.product} &rarr;</a></p>
-        </div>
-      </div>
-    `;
+  var html = ranked.map(function(p, i) {
+    var rec = PRODUCT_RECS[p.index];
+    return '<div class="action-step">' +
+      '<div class="action-num">' + (i + 1) + '</div>' +
+      '<div class="action-body">' +
+        '<h4>' + iconHTML(p.icon) + ' ' + p.name + ' \u2014 ' + toPercent(p.score, 9) + '%</h4>' +
+        '<p>' + rec.quickWin + ' <a href="' + rec.url + '" target="_blank">Try ' + rec.product + ' \u2192</a></p>' +
+      '</div>' +
+    '</div>';
   }).join('');
 
-  container.innerHTML = `<h3>Your Priority Action Plan</h3>${stepsHTML}`;
+  document.getElementById('actionPlan').innerHTML = '<h3>Your Priority Fixes</h3>' + html;
+}
+
+/* ═══════════════════════════════════════════
+   RETAKE
+   ═══════════════════════════════════════════ */
+function retakeQuiz() {
+  currentQuestion = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  pillarScores = new Array(6).fill(0);
+
+  // Reset radar canvas
+  var canvas = document.getElementById('radarChart');
+  var parent = canvas.parentNode;
+  parent.removeChild(canvas);
+  var newCanvas = document.createElement('canvas');
+  newCanvas.id = 'radarChart';
+  parent.appendChild(newCanvas);
+
+  showScreen('screenWelcome');
 }
 
 /* ═══════════════════════════════════════════
    SHARE
    ═══════════════════════════════════════════ */
 function shareTwitter() {
-  const total = pillarScores.reduce((a, b) => a + b, 0);
-  const tier = TIERS.find(t => total <= t.max);
-  const text = encodeURIComponent(`I just scored ${total}/72 on the Website Trust Score quiz — "${tier.name}" \uD83D\uDC40\n\nTake the free assessment and see how your website stacks up:\nhttps://smashballoon.com/trust-score/`);
-  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
+  var total = pillarScores.reduce(function(a, b) { return a + b; }, 0);
+  var totalPct = toPercent(total, MAX_SCORE);
+  var tier = TIERS.find(function(t) { return totalPct <= t.max; });
+  var text = encodeURIComponent('I scored ' + totalPct + '% on the Website Trust Score \u2014 "' + tier.name + '" \uD83D\uDC40\n\nFree assessment:\nhttps://smashballoon.com/trust-score/');
+  window.open('https://twitter.com/intent/tweet?text=' + text, '_blank', 'width=550,height=420');
 }
 
 function shareLinkedIn() {
-  const url = encodeURIComponent('https://smashballoon.com/trust-score/');
-  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=550,height=420');
+  var url = encodeURIComponent('https://smashballoon.com/trust-score/');
+  window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url, '_blank', 'width=550,height=420');
 }
 
 /* ═══════════════════════════════════════════
    KEYBOARD NAV
    ═══════════════════════════════════════════ */
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', function(e) {
   if (!document.getElementById('screenQuiz').classList.contains('active')) return;
-  const key = e.key;
-  if (key >= '0' && key <= '3') selectAnswer(parseInt(key));
-  if (key === 'Backspace' && !e.target.matches('input')) goBack();
+  if (e.key >= '1' && e.key <= '4') selectAnswer(parseInt(e.key) - 1);
+  if (e.key === 'Backspace' && !e.target.matches('input')) goBack();
 });
 </script>
 
